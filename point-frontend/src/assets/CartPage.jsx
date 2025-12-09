@@ -1,7 +1,8 @@
 // src/assets/CartPage.jsx
 import { Trash2, ArrowLeft } from 'lucide-react';
 
-function CartPage({ cartItems, onRemove, onGoBack }) {
+// DEĞİŞİKLİK 1: Buraya 'onConfirm' parametresini ekledik
+function CartPage({ cartItems, onRemove, onGoBack, onConfirm }) {
   const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
   if (cartItems.length === 0) {
@@ -80,7 +81,11 @@ function CartPage({ cartItems, onRemove, onGoBack }) {
               </div>
             </div>
 
-            <button className="w-full bg-rose-600 text-white py-4 rounded-xl font-bold hover:bg-rose-700 transition shadow-lg active:scale-95 transform duration-100">
+            {/* DEĞİŞİKLİK 2: onClick eventi eklendi */}
+            <button 
+              onClick={onConfirm}
+              className="w-full bg-rose-600 text-white py-4 rounded-xl font-bold hover:bg-rose-700 transition shadow-lg active:scale-95 transform duration-100"
+            >
               Sepeti Onayla
             </button>
             <p className="text-xs text-center text-gray-400 mt-4">Siparişiniz hazırlık sırasına alınacaktır.</p>
