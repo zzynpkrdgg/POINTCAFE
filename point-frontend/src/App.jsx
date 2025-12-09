@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-// --- BİLEŞENLER ---
+// BİLEŞENLER
 import Navbar from './assets/NavBar';
 import TimeSelector from './assets/TimeSelector';
 import MyOrders from './assets/MyOrders'; 
@@ -10,24 +10,28 @@ import LoginPage from './assets/LoginPage';
 import AdminDashboard from './assets/AdminDashboard';
 import PaymentPage from './assets/PaymentPage';
 import OrderSuccess from './assets/OrderSuccess';
-import OrderDetailsModal from './assets/OrderDetailsModal'; // YENİ: Modal importu
+import OrderDetailsModal from './assets/OrderDetailsModal';
+import RatingModal from './assets/RatingModal'; // YENİ
+import ProfilePage from './assets/ProfilePage'; // YENİ
 
 function App() {
   // --- STATE ---
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
-  const [userRole, setUserRole] = useState(null); 
+  const [userInfo, setUserInfo] = useState(null); // YENİ: Kullanıcı bilgileri
   const [activeTab, setActiveTab] = useState("menu"); 
   const [activeCategory, setActiveCategory] = useState("Tümü");
   const [cartItems, setCartItems] = useState([]); 
   const [pickupTime, setPickupTime] = useState(null); 
   
-  // DEĞİŞİKLİK 1: Artık tek sipariş değil, sipariş LİSTESİ tutuyoruz.
+  // Sipariş Listeleri
   const [activeOrders, setActiveOrders] = useState([]); 
+  const [pastOrders, setPastOrders] = useState([]); // YENİ: Geçmiş Siparişler
   
-  // DEĞİŞİKLİK 2: Modalda gösterilecek seçili sipariş
+  // Modallar
   const [selectedOrderForModal, setSelectedOrderForModal] = useState(null);
+  const [ratingOrder, setRatingOrder] = useState(null); // YENİ: Puanlanacak sipariş
 
-  // --- ÜRÜN VERİLERİ ---
+  // Ürün Verileri
   const [products, setProducts] = useState([
     { id: 1, name: "Filtre Kahve", price: 45, category: "Sıcak İçecekler", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80", description: "Yoğun aromalı taze demlenmiş kahve.", inStock: true },
     { id: 2, name: "Latte", price: 60, category: "Sıcak İçecekler", image: "/Images/latte.jpg", description: "Espresso ve sıcak sütün mükemmel uyumu.", inStock: true },
@@ -42,16 +46,30 @@ function App() {
   // --- FONKSİYONLAR ---
 
   const handleLoginSuccess = (role) => {
-    setUserRole(role);
+    // Burada normalde backend'den kullanıcı bilgisi gelir.
+    // Biz simüle ediyoruz:
+    const mockUser = role === 'student' ? {
+        name: "Fikret Kutluay",
+        role: "student",
+        studentId: "23291277",
+        email: "23291277@ankara.edu.tr"
+    } : {
+        name: "Kafe Yöneticisi",
+        role: "staff",
+        studentId: "-",
+        email: "admin@point.com"
+    };
+
+    setUserInfo(mockUser);
     setIsLoggedIn(true);
     if(role === 'student') setActiveTab("menu");
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setUserRole(null);
+    setUserInfo(null);
     setCartItems([]);
-    setActiveOrders([]); // Çıkışta siparişleri temizle
+    // activeOrders ve pastOrders'ı silmiyoruz ki demo sırasında veri kaybolmasın.
   };
 
   const handleStockToggle = (productId) => {
@@ -78,24 +96,47 @@ function App() {
     setPickupTime(time);
   };
 
-  // --- SİPARİŞ TAMAMLANINCA ---
   const handleOrderCompleted = (note) => {
-    
     const newOrder = {
         id: Math.floor(Math.random() * 10000),
         items: [...cartItems],
         totalAmount: cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0),
         pickupTime: pickupTime,
         note: note,
-        status: 'Hazırlanıyor'
+        status: 'Hazırlanıyor',
+        date: new Date().toLocaleDateString('tr-TR') // Tarih ekledik
     };
-
-    // DEĞİŞİKLİK 3: Eski siparişleri silmeden YENİSİNİ LİSTEYE EKLE
-    // [newOrder, ...prev] -> Yeni siparişi listenin en başına koyar
     setActiveOrders(prevOrders => [newOrder, ...prevOrders]);
-
     setCartItems([]); 
     setActiveTab("success");
+  };
+
+  const handleOrderStatusUpdate = (orderId, newStatus) => {
+     // Admin "Teslim Edildi" derse, sipariş listeden SİLİNMEZ, sadece durumu güncellenir.
+     // Böylece öğrenci "Puanla" butonunu görebilir.
+     setActiveOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+     ));
+  };
+
+  // YENİ: PUANLAMA ve ARŞİVLEME
+  const handleRateAndArchive = (orderId, rating, comment) => {
+    // 1. İlgili siparişi bul
+    const orderToArchive = activeOrders.find(o => o.id === orderId);
+    
+    if (orderToArchive) {
+        // 2. Puanı ve yorumu ekle
+        const archivedOrder = { ...orderToArchive, rating, comment, status: 'Tamamlandı' };
+        
+        // 3. Geçmiş Siparişlere ekle
+        setPastOrders(prev => [archivedOrder, ...prev]);
+
+        // 4. Aktif Siparişlerden sil
+        setActiveOrders(prev => prev.filter(o => o.id !== orderId));
+        
+        // 5. Modalı kapat
+        setRatingOrder(null);
+    }
   };
 
   const filteredProducts = activeCategory === "Tümü" ? products : products.filter(p => p.category === activeCategory);
@@ -103,12 +144,23 @@ function App() {
   // --- RENDER ---
 
   if (!isLoggedIn) return <LoginPage onLogin={handleLoginSuccess} />;
-  if (userRole === 'staff') return <AdminDashboard products={products} onUpdateStock={handleStockToggle} onLogout={handleLogout} />;
+  
+  if (userInfo?.role === 'staff') {
+    return (
+      <AdminDashboard 
+          products={products} 
+          orders={activeOrders} 
+          onUpdateStock={handleStockToggle} 
+          onUpdateOrderStatus={handleOrderStatusUpdate} 
+          onLogout={handleLogout} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       
-      {/* DETAY MODALI: Eğer selectedOrderForModal doluysa modalı göster */}
+      {/* MODALLAR */}
       {selectedOrderForModal && (
         <OrderDetailsModal 
           order={selectedOrderForModal} 
@@ -116,17 +168,36 @@ function App() {
         />
       )}
 
+      {/* Puanlama Modalı */}
+      {ratingOrder && (
+        <RatingModal 
+           order={ratingOrder}
+           onClose={() => setRatingOrder(null)}
+           onSubmit={handleRateAndArchive}
+        />
+      )}
+
       <Navbar 
         cartCount={cartItems.length} 
         onGoHome={() => setActiveTab("menu")}
         onGoCart={() => setActiveTab("cart")}
-
         onLogout={handleLogout}
+        // Profil için yeni bir ikon ekleyebiliriz ama şimdilik "Logoya" basınca menüye dönüyor.
+        // Profil sayfasına geçiş için Navbar'a yeni bir buton eklemek gerekebilir
+        // veya Menüde bir buton olabilir. Şimdilik Navbar'da "Profil" butonu varmış gibi davranalım.
       />
 
       {/* --- SAYFALAR --- */}
 
-      {activeTab === "cart" ? (
+      {activeTab === "profile" ? (
+         // YENİ: PROFİL SAYFASI
+         <ProfilePage 
+            userInfo={userInfo}
+            pastOrders={pastOrders}
+            onGoBack={() => setActiveTab("menu")}
+         />
+
+      ) : activeTab === "cart" ? (
         <CartPage 
           cartItems={cartItems} 
           onRemove={handleRemoveFromCart} 
@@ -152,15 +223,26 @@ function App() {
       ) : activeTab === "success" ? (
         <OrderSuccess 
            pickupTime={pickupTime}
-           onGoHome={() => {
-             setActiveTab("menu");
-             // Saati sıfırlamıyoruz, belki yine aynı saate ister
-           }}
+           onGoHome={() => setActiveTab("menu")}
         />
 
       ) : (
         <>
           {/* MENÜ EKRANI */}
+          
+          {/* Profil Butonu (Menünün Üstüne Ekledim, Hızlı Erişim İçin) */}
+          <div className="bg-rose-900 text-white pb-6 pt-2 px-4 shadow-lg">
+             <div className="container mx-auto max-w-5xl flex justify-between items-center">
+                <span className="text-rose-200 text-sm">Hoş geldin, {userInfo.name} 👋</span>
+                <button 
+                  onClick={() => setActiveTab("profile")}
+                  className="bg-rose-800 hover:bg-rose-700 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1"
+                >
+                  👤 Profilim
+                </button>
+             </div>
+          </div>
+
           <div className="bg-white pb-6 rounded-b-3xl shadow-sm mb-6 pt-4">
             <div className="container mx-auto px-4 max-w-5xl">
                 
@@ -175,10 +257,10 @@ function App() {
                     </div>
 
                     <div>
-                        {/* DEĞİŞİKLİK 4: activeOrders listesini gönderiyoruz */}
                         <MyOrders 
                           orders={activeOrders} 
-                          onViewDetails={(order) => setSelectedOrderForModal(order)} // Modalı aç
+                          onViewDetails={(order) => setSelectedOrderForModal(order)}
+                          onRate={(order) => setRatingOrder(order)} // Puanla'ya basınca
                         />
                     </div>
                 </div>
