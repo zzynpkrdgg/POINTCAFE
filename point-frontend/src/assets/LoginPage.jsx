@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 
+// PROPS:
+// - onLogin: App.js'e kullanıcının hangi rolle giriş yaptığını bildiren fonksiyon.
 const LoginPage = ({ onLogin }) => {
-  const [activeTab, setActiveTab] = useState('student'); // 'student' veya 'staff'
+  // Kullanıcı tipini (Sekme) tutan state: 'student' veya 'staff'
+  const [activeTab, setActiveTab] = useState('student'); 
 
+  // Form gönderildiğinde çalışır
   const handleSubmit = (e) => {
-    e.preventDefault();
-    // Burada backend olmadığı için direkt giriş başarılı sayıyoruz.
-    // Hangi rolde giriş yapıldığını App.js'e gönderiyoruz.
+    e.preventDefault(); // Sayfa yenilenmesini engelle
+    // Backend olmadığı için şifre kontrolü yapmadan direkt başarılı sayıyoruz.
+    // Seçili rolü (activeTab) üst bileşene (App.js) gönderiyoruz.
     onLogin(activeTab);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      {/* Logo Alanı */}
+      {/* --- LOGO VE BAŞLIK ALANI --- */}
       <div className="mb-8 text-center">
         <div className="bg-rose-900 text-white w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold mx-auto shadow-xl border-4 border-rose-100">
           P
@@ -21,10 +25,10 @@ const LoginPage = ({ onLogin }) => {
         <p className="text-gray-500 text-sm mt-1">Kampüsün Lezzet Noktası</p>
       </div>
 
-      {/* Login Kartı */}
+      {/* --- GİRİŞ KARTI --- */}
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm border border-gray-100">
         
-        {/* Sekmeler (Öğrenci / Personel) */}
+        {/* Rol Seçim Sekmeleri (Tabs) */}
         <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
           <button
             onClick={() => setActiveTab('student')}
@@ -48,12 +52,13 @@ const LoginPage = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Form */}
+        {/* Giriş Formu */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">E-Posta</label>
             <input 
               type="email" 
+              // Rol seçimine göre placeholder değişiyor (UX İyileştirmesi)
               placeholder={activeTab === 'student' ? "23291277@ankara.edu.tr" : "yonetici@point.com"}
               className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-rose-900 focus:border-transparent outline-none transition text-sm"
               required 

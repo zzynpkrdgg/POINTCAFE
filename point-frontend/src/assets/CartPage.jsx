@@ -1,10 +1,17 @@
-// src/assets/CartPage.jsx
 import { Trash2, ArrowLeft } from 'lucide-react';
 
-// DEĞİŞİKLİK 1: Buraya 'onConfirm' parametresini ekledik
+// PROPS:
+// - cartItems: Sepetteki ürünlerin listesi
+// - onRemove: Ürünü sepetten silme fonksiyonu
+// - onGoBack: Geri (Menü) butonuna basma fonksiyonu
+// - onConfirm: "Sepeti Onayla" butonuna basma fonksiyonu
 function CartPage({ cartItems, onRemove, onGoBack, onConfirm }) {
+  
+  // --- FİYAT HESAPLAMALARI ---
+  // reduce fonksiyonu ile tüm ürünlerin (fiyat * miktar) toplamını alıyoruz.
   const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
+  // EĞER SEPET BOŞSA:
   if (cartItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
@@ -21,6 +28,7 @@ function CartPage({ cartItems, onRemove, onGoBack, onConfirm }) {
     );
   }
 
+  // EĞER ÜRÜN VARSA:
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Başlık ve Geri Dön */}
@@ -37,17 +45,15 @@ function CartPage({ cartItems, onRemove, onGoBack, onConfirm }) {
         <div className="md:col-span-2 space-y-4">
           {cartItems.map((item) => (
             <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 items-center">
-              {/* Ürün Resmi */}
               <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg bg-gray-100" />
               
-              {/* Bilgiler */}
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-800">{item.name}</h3>
                 <p className="text-gray-500 text-sm">{item.category}</p>
                 <div className="mt-2 font-bold text-rose-600">{item.price}₺ <span className="text-gray-400 text-sm font-normal">x {item.quantity}</span></div>
               </div>
 
-              {/* Toplam Fiyat ve Silme */}
+              {/* Silme Butonu */}
               <div className="text-right flex flex-col items-end gap-2">
                 <span className="font-bold text-lg text-gray-900">{item.price * item.quantity}₺</span>
                 <button 
@@ -61,7 +67,7 @@ function CartPage({ cartItems, onRemove, onGoBack, onConfirm }) {
           ))}
         </div>
 
-        {/* SAĞ TARAF: Özet Kutusu */}
+        {/* SAĞ TARAF: Özet ve Onay Kutusu */}
         <div className="md:col-span-1">
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 sticky top-24">
             <h2 className="text-xl font-bold mb-6 border-b pb-4">Sipariş Özeti</h2>
@@ -71,17 +77,19 @@ function CartPage({ cartItems, onRemove, onGoBack, onConfirm }) {
                 <span>Ara Toplam</span>
                 <span>{totalPrice}₺</span>
               </div>
+              {/* KDV Hesaplaması (Örnek %10) */}
               <div className="flex justify-between text-gray-600">
                 <span>KDV (%10)</span>
                 <span>{(totalPrice * 0.10).toFixed(2)}₺</span>
               </div>
               <div className="flex justify-between text-xl font-bold text-gray-900 pt-4 border-t">
                 <span>Toplam</span>
+                {/* Toplam = Ara Toplam + KDV */}
                 <span>{(totalPrice * 1.10).toFixed(2)}₺</span>
               </div>
             </div>
 
-            {/* DEĞİŞİKLİK 2: onClick eventi eklendi */}
+            {/* ONAY BUTONU: onConfirm tetiklenir */}
             <button 
               onClick={onConfirm}
               className="w-full bg-rose-600 text-white py-4 rounded-xl font-bold hover:bg-rose-700 transition shadow-lg active:scale-95 transform duration-100"

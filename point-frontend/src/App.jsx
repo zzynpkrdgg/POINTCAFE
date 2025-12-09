@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-// BİLEŞENLER
+// --- BİLEŞENLERİN İÇE AKTARILMASI (COMPONENT IMPORTS) ---
 import Navbar from './assets/NavBar';
 import TimeSelector from './assets/TimeSelector';
 import MyOrders from './assets/MyOrders'; 
@@ -11,27 +11,38 @@ import AdminDashboard from './assets/AdminDashboard';
 import PaymentPage from './assets/PaymentPage';
 import OrderSuccess from './assets/OrderSuccess';
 import OrderDetailsModal from './assets/OrderDetailsModal';
-import RatingModal from './assets/RatingModal'; // YENİ
-import ProfilePage from './assets/ProfilePage'; // YENİ
+import RatingModal from './assets/RatingModal';
+import ProfilePage from './assets/ProfilePage';
 
 function App() {
-  // --- STATE ---
+  // ========================================================================
+  // 1. STATE YÖNETİMİ (DURUM KONTROLÜ)
+  // ========================================================================
+
+  // Kullanıcı Oturum Bilgileri
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
-  const [userInfo, setUserInfo] = useState(null); // YENİ: Kullanıcı bilgileri
+  const [userInfo, setUserInfo] = useState(null); // Giriş yapanın Ad, Soyad, Rol bilgisi
+
+  // Navigasyon Yönetimi (Hangi ekranın aktif olduğunu tutar)
+  // Değerler: 'menu', 'cart', 'payment', 'success', 'profile'
   const [activeTab, setActiveTab] = useState("menu"); 
   const [activeCategory, setActiveCategory] = useState("Tümü");
-  const [cartItems, setCartItems] = useState([]); 
-  const [pickupTime, setPickupTime] = useState(null); 
-  
-  // Sipariş Listeleri
-  const [activeOrders, setActiveOrders] = useState([]); 
-  const [pastOrders, setPastOrders] = useState([]); // YENİ: Geçmiş Siparişler
-  
-  // Modallar
-  const [selectedOrderForModal, setSelectedOrderForModal] = useState(null);
-  const [ratingOrder, setRatingOrder] = useState(null); // YENİ: Puanlanacak sipariş
 
-  // Ürün Verileri
+  // Sipariş Süreç Verileri
+  const [cartItems, setCartItems] = useState([]); // Sepetteki anlık ürünler
+  const [pickupTime, setPickupTime] = useState(null); // Kullanıcının seçtiği teslim saati
+  
+  // Veritabanı Simülasyonu (Backend olmadığı için listeleri burada tutuyoruz)
+  // activeOrders: Mutfaktaki veya yoldaki siparişler
+  // pastOrders: Tamamlanmış ve puanlanmış siparişler
+  const [activeOrders, setActiveOrders] = useState([]); 
+  const [pastOrders, setPastOrders] = useState([]); 
+  
+  // Modal (Açılır Pencere) Kontrolleri
+  const [selectedOrderForModal, setSelectedOrderForModal] = useState(null); // Detay penceresi için
+  const [ratingOrder, setRatingOrder] = useState(null); // Puanlama penceresi için
+
+  // Ürün Kataloğu (Yönetici panelinden stok durumu değiştirilebilir)
   const [products, setProducts] = useState([
     { id: 1, name: "Filtre Kahve", price: 45, category: "Sıcak İçecekler", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80", description: "Yoğun aromalı taze demlenmiş kahve.", inStock: true },
     { id: 2, name: "Latte", price: 60, category: "Sıcak İçecekler", image: "/Images/latte.jpg", description: "Espresso ve sıcak sütün mükemmel uyumu.", inStock: true },
@@ -43,11 +54,15 @@ function App() {
 
   const categories = ["Tümü", "Yemekler", "Soğuk İçecekler", "Sıcak İçecekler"];
 
-  // --- FONKSİYONLAR ---
+  // ========================================================================
+  // 2. İŞ MANTIĞI FONKSİYONLARI (BUSINESS LOGIC)
+  // ========================================================================
 
+  /**
+   * Giriş başarılı olduğunda çalışır.
+   * Backend simülasyonu yaparak kullanıcı rolüne göre veri atar.
+   */
   const handleLoginSuccess = (role) => {
-    // Burada normalde backend'den kullanıcı bilgisi gelir.
-    // Biz simüle ediyoruz:
     const mockUser = role === 'student' ? {
         name: "Fikret Kutluay",
         role: "student",
@@ -65,19 +80,25 @@ function App() {
     if(role === 'student') setActiveTab("menu");
   };
 
+  /**
+   * Çıkış yapma işlemi.
+   * NOT: activeOrders ve pastOrders bilerek silinmiyor. 
+   * Böylece demo sırasında öğrenci sipariş verip çıkınca, admin girip o siparişi görebilir.
+   */
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserInfo(null);
     setCartItems([]);
-    // activeOrders ve pastOrders'ı silmiyoruz ki demo sırasında veri kaybolmasın.
   };
 
+  // Yönetici Panelinden Stok Durumu (Var/Yok) Değiştirme
   const handleStockToggle = (productId) => {
     setProducts(prevProducts => prevProducts.map(p => p.id === productId ? { ...p, inStock: !p.inStock } : p));
   };
 
+  // Sepete Ürün Ekleme (Aynı ürün varsa miktar artırır)
   const handleAddToCart = (product) => {
-    if (!product.inStock) return;
+    if (!product.inStock) return; // Stok kontrolü
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
       if (existingItem) {
@@ -88,6 +109,7 @@ function App() {
     });
   };
 
+  // Sepetten Ürün Silme
   const handleRemoveFromCart = (productId) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
   };
@@ -96,55 +118,61 @@ function App() {
     setPickupTime(time);
   };
 
+  /**
+   * Ödeme Başarılı Olduğunda Çalışır.
+   * Sepeti boşaltır ve yeni bir 'Aktif Sipariş' oluşturur.
+   */
   const handleOrderCompleted = (note) => {
     const newOrder = {
-        id: Math.floor(Math.random() * 10000),
+        id: Math.floor(Math.random() * 10000) + 1000, // 4 haneli rastgele ID
         items: [...cartItems],
         totalAmount: cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0),
         pickupTime: pickupTime,
         note: note,
         status: 'Hazırlanıyor',
-        date: new Date().toLocaleDateString('tr-TR') // Tarih ekledik
+        date: new Date().toLocaleDateString('tr-TR')
     };
+    // Yeni siparişi listenin en başına ekle (LIFO mantığına benzer görünüm için)
     setActiveOrders(prevOrders => [newOrder, ...prevOrders]);
     setCartItems([]); 
     setActiveTab("success");
   };
 
+  /**
+   * Yönetici Panelinden Sipariş Durumu Güncelleme.
+   * Eğer durum 'Teslim Edildi' olursa, sipariş silinmez; durumu güncellenir.
+   * Böylece öğrenci panelinde 'Puanla' butonu aktif olur.
+   */
   const handleOrderStatusUpdate = (orderId, newStatus) => {
-     // Admin "Teslim Edildi" derse, sipariş listeden SİLİNMEZ, sadece durumu güncellenir.
-     // Böylece öğrenci "Puanla" butonunu görebilir.
      setActiveOrders(prev => prev.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
      ));
   };
 
-  // YENİ: PUANLAMA ve ARŞİVLEME
+  /**
+   * Puanlama ve Arşivleme İşlemi.
+   * Sipariş 'Aktif' listeden çıkarılıp 'Geçmiş' listesine taşınır.
+   */
   const handleRateAndArchive = (orderId, rating, comment) => {
-    // 1. İlgili siparişi bul
     const orderToArchive = activeOrders.find(o => o.id === orderId);
-    
     if (orderToArchive) {
-        // 2. Puanı ve yorumu ekle
         const archivedOrder = { ...orderToArchive, rating, comment, status: 'Tamamlandı' };
-        
-        // 3. Geçmiş Siparişlere ekle
         setPastOrders(prev => [archivedOrder, ...prev]);
-
-        // 4. Aktif Siparişlerden sil
         setActiveOrders(prev => prev.filter(o => o.id !== orderId));
-        
-        // 5. Modalı kapat
         setRatingOrder(null);
     }
   };
 
+  // Kategori Filtreleme
   const filteredProducts = activeCategory === "Tümü" ? products : products.filter(p => p.category === activeCategory);
 
-  // --- RENDER ---
+  // ========================================================================
+  // 3. RENDER (GÖRÜNÜM KATMANI)
+  // ========================================================================
 
   if (!isLoggedIn) return <LoginPage onLogin={handleLoginSuccess} />;
   
+  // Personel Girişi -> Admin Paneli Render Edilir
   if (userInfo?.role === 'staff') {
     return (
       <AdminDashboard 
@@ -157,10 +185,11 @@ function App() {
     );
   }
 
+  // Öğrenci Girişi -> Ana Uygulama Render Edilir
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       
-      {/* MODALLAR */}
+      {/* --- MODALLAR (Sayfanın en üst katmanı) --- */}
       {selectedOrderForModal && (
         <OrderDetailsModal 
           order={selectedOrderForModal} 
@@ -168,7 +197,6 @@ function App() {
         />
       )}
 
-      {/* Puanlama Modalı */}
       {ratingOrder && (
         <RatingModal 
            order={ratingOrder}
@@ -182,21 +210,19 @@ function App() {
         onGoHome={() => setActiveTab("menu")}
         onGoCart={() => setActiveTab("cart")}
         onLogout={handleLogout}
-        // Profil için yeni bir ikon ekleyebiliriz ama şimdilik "Logoya" basınca menüye dönüyor.
-        // Profil sayfasına geçiş için Navbar'a yeni bir buton eklemek gerekebilir
-        // veya Menüde bir buton olabilir. Şimdilik Navbar'da "Profil" butonu varmış gibi davranalım.
       />
 
-      {/* --- SAYFALAR --- */}
+      {/* --- SAYFA YÖNLENDİRMELERİ (ROUTING SİMÜLASYONU) --- */}
 
+      {/* 1. PROFİL SAYFASI */}
       {activeTab === "profile" ? (
-         // YENİ: PROFİL SAYFASI
          <ProfilePage 
             userInfo={userInfo}
             pastOrders={pastOrders}
             onGoBack={() => setActiveTab("menu")}
          />
 
+      /* 2. SEPET SAYFASI */
       ) : activeTab === "cart" ? (
         <CartPage 
           cartItems={cartItems} 
@@ -212,6 +238,7 @@ function App() {
           }}
         />
       
+      /* 3. ÖDEME SAYFASI */
       ) : activeTab === "payment" ? (
         <PaymentPage 
            totalAmount={cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
@@ -220,17 +247,17 @@ function App() {
            onCompleteOrder={handleOrderCompleted}
         />
 
+      /* 4. BAŞARI SAYFASI */
       ) : activeTab === "success" ? (
         <OrderSuccess 
            pickupTime={pickupTime}
            onGoHome={() => setActiveTab("menu")}
         />
 
+      /* 5. VARSAYILAN: MENÜ SAYFASI */
       ) : (
         <>
-          {/* MENÜ EKRANI */}
-          
-          {/* Profil Butonu (Menünün Üstüne Ekledim, Hızlı Erişim İçin) */}
+          {/* Üst Profil Butonu */}
           <div className="bg-rose-900 text-white pb-6 pt-2 px-4 shadow-lg">
              <div className="container mx-auto max-w-5xl flex justify-between items-center">
                 <span className="text-rose-200 text-sm">Hoş geldin, {userInfo.name} 👋</span>
@@ -243,10 +270,11 @@ function App() {
              </div>
           </div>
 
+          {/* Bilgi ve Takip Alanı */}
           <div className="bg-white pb-6 rounded-b-3xl shadow-sm mb-6 pt-4">
             <div className="container mx-auto px-4 max-w-5xl">
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Sol: Saat Seçici */}
                     <div>
                         <TimeSelector onTimeSelect={handleTimeSelected} />
                         {pickupTime && (
@@ -255,18 +283,19 @@ function App() {
                             </div>
                         )}
                     </div>
-
+                    {/* Sağ: Sipariş Takibi */}
                     <div>
                         <MyOrders 
                           orders={activeOrders} 
                           onViewDetails={(order) => setSelectedOrderForModal(order)}
-                          onRate={(order) => setRatingOrder(order)} // Puanla'ya basınca
+                          onRate={(order) => setRatingOrder(order)} 
                         />
                     </div>
                 </div>
             </div>
           </div>
 
+          {/* Menü ve Ürünler */}
           <div className="container mx-auto px-4 max-w-5xl">
             <div className="flex overflow-x-auto gap-3 pb-4 mb-2 no-scrollbar">
               {categories.map((cat) => (

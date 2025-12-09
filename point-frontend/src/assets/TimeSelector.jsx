@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
-// DEĞİŞİKLİK 1: Parametre olarak { onTimeSelect } ekledik.
-// Bu fonksiyon App.jsx'ten geliyor ve oradaki ana veriyi güncelleyecek.
+// PROPS:
+// - onTimeSelect: Kullanıcı bir saat seçtiğinde bu bilgiyi App.js'e ileten fonksiyon.
 function TimeSelector({ onTimeSelect }) {
-  // Görsel olarak butonun kırmızı kalması için kendi state'imizi de tutuyoruz
+  
+  // Yerel State: Sadece seçili olan butonun rengini değiştirmek (UI) için tutulur.
+  // Asıl veri App.js'deki 'pickupTime' state'ine gönderilir.
   const [localSelectedTime, setLocalSelectedTime] = useState(null);
 
   const timeSlots = [
@@ -11,10 +13,10 @@ function TimeSelector({ onTimeSelect }) {
   ];
 
   const handleTimeClick = (time) => {
-    // 1. Kendi içimizdeki görüntüyü güncelle (Buton kırmızı olsun)
+    // 1. Görsel güncelleme (Butonu boya)
     setLocalSelectedTime(time);
     
-    // 2. Ana yöneticiye (App.js) haber ver (ÖNEMLİ OLAN BU)
+    // 2. Veri iletimi (App.js'e haber ver)
     if (onTimeSelect) {
       onTimeSelect(time);
     }
@@ -30,13 +32,12 @@ function TimeSelector({ onTimeSelect }) {
         {timeSlots.map((time) => (
           <button
             key={time}
-            // DEĞİŞİKLİK 2: Tıklanınca hem rengi değiştirsin hem App.js'e haber versin
             onClick={() => handleTimeClick(time)}
             className={`
               py-2 px-4 rounded-lg font-medium transition-all duration-200
               ${localSelectedTime === time 
-                ? "bg-rose-900 text-white shadow-md scale-105" // Renk senin temana uygun rose-900 yapıldı
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200" 
+                ? "bg-rose-900 text-white shadow-md scale-105" // Seçili stil
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200" // Normal stil
               }
             `}
           >
@@ -45,6 +46,7 @@ function TimeSelector({ onTimeSelect }) {
         ))}
       </div>
 
+      {/* Seçim yapıldıysa altta bilgilendirme göster */}
       {localSelectedTime && (
         <div className="mt-6 p-3 bg-green-50 text-green-700 text-center rounded-lg border border-green-200 animate-pulse">
           Siparişiniz <strong>{localSelectedTime}</strong> saatinde hazırlanmaya başlayacak!

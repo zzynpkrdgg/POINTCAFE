@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { Star, X } from 'lucide-react';
 
+// PROPS:
+// - order: Puanlanacak siparişin bilgileri
+// - onClose: Modalı kapatma fonksiyonu
+// - onSubmit: Puanı ve yorumu kaydedip siparişi arşivleyen fonksiyon
 function RatingModal({ order, onClose, onSubmit }) {
-  const [rating, setRating] = useState(0); // 1-5 arası puan
-  const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(0); // 1-5 Yıldız
+  const [comment, setComment] = useState(''); // Kullanıcı yorumu
 
   const handleSubmit = () => {
+    // Validasyon: En az 1 yıldız verilmeli
     if (rating === 0) {
       alert("Lütfen en az 1 yıldız veriniz!");
       return;
@@ -14,9 +19,11 @@ function RatingModal({ order, onClose, onSubmit }) {
   };
 
   return (
+    // Overlay (Arka plan karartma)
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
         
+        {/* Header */}
         <div className="bg-rose-900 p-4 flex justify-between items-center text-white">
           <h3 className="font-bold">Siparişi Değerlendir</h3>
           <button onClick={onClose}><X size={20} /></button>
@@ -27,7 +34,7 @@ function RatingModal({ order, onClose, onSubmit }) {
             <span className="font-bold text-rose-900">#{order.id}</span> numaralı siparişinden memnun kaldın mı?
           </p>
 
-          {/* Yıldızlar */}
+          {/* Yıldızlar Döngüsü */}
           <div className="flex justify-center gap-2 mb-6">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -37,8 +44,8 @@ function RatingModal({ order, onClose, onSubmit }) {
               >
                 <Star 
                   size={32} 
-                  fill={star <= rating ? "#FBBF24" : "none"} // Sarı veya Boş
-                  stroke={star <= rating ? "#FBBF24" : "#D1D5DB"} // Sarı veya Gri Çizgi
+                  fill={star <= rating ? "#FBBF24" : "none"} // Eğer puan bu yıldıza eşit veya büyükse sarı yap
+                  stroke={star <= rating ? "#FBBF24" : "#D1D5DB"}
                 />
               </button>
             ))}
