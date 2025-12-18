@@ -9,7 +9,11 @@ async function testDatabaseConnection() {
     try {
         // Product tablosundan ilk 5 ürünü çekmeyi dener
         const [rows] = await db.query('SELECT * FROM product LIMIT 5'); 
-        
+        rows.forEach(product => {
+            const stokGosterimi = product.TotalStock === -1 ? "♾️ Sonsuz" : product.TotalStock
+            //buradaki console logu veritabanı doğru çalışıyor mu diye ekledim silinebilir sorun yok
+            console.log(`Ürün: ${product.ProductName} - Stok: ${stokGosterimi}`);
+        });
         console.log("-----------------------------------------");
         console.log("✅ Veritabanı bağlantısı BAŞARILI.");
         console.log(`Bağlantı kuruldu ve ${rows.length} ürün bulundu.`);
