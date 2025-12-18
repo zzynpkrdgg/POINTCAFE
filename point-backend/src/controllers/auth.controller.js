@@ -1,19 +1,20 @@
-export const login = (req, res) => {
-  const { email } = req.body;
+import { loginUser } from "../services/auth.service.js";
 
-  // Geçici mock login
-  if (!email) {
-    return res.status(400).json({
+export const login = (req, res) => {
+  const { email, password } = req.body;
+
+  const user = loginUser(email, password);
+
+  if (user) {
+    return res.json({
+      success: true,
+      message: "Giriş başarılı",
+      user: user
+    });
+  } else {
+    return res.status(401).json({
       success: false,
-      message: "Email zorunlu"
+      message: "E-posta veya şifre hatalı!"
     });
   }
-
-  res.json({
-    success: true,
-    user: {
-      email,
-      role: email === "admin@point.com" ? "staff" : "student"
-    }
-  });
 };

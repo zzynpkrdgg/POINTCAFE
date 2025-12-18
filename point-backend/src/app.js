@@ -14,7 +14,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 
-app.get("/", (req, res) => {
+app.get("/", (req, res) => { 
   res.send(`
     <div style="text-align:center; margin-top:100px; font-family: Arial, sans-serif;">
       <h1 style="color: #2c3e50;">☕ PointCafe API'ye Hoş Geldiniz</h1>
