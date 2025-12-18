@@ -4,9 +4,10 @@ function ProductCard({ product, onAdd }) {
       {/* Ürün Resmi Alanı */}
       <div className="h-40 bg-gray-200 relative">
         <img 
-          src={product.image} 
+          src={product.image || "https://via.placeholder.com/300x200?text=Ürün"} 
           alt={product.name} 
           className="w-full h-full object-cover"
+          onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/300x200?text=Görsel+Yok"; }}
         />
         {/* Stok durumu kontrolü (Bonus) */}
         {!product.inStock && (
@@ -23,7 +24,7 @@ function ProductCard({ product, onAdd }) {
           <span className="font-bold text-rose-600">{product.price}₺</span>
         </div>
         
-        <p className="text-gray-500 text-sm mb-4 line-clamp-2">{product.description}</p>
+        <p className="text-gray-500 text-sm mb-4 line-clamp-2">{product.description || "Ürün açıklaması yakında eklenecek."}</p>
         
         {/* Ekle Butonu */}
         <button 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // --- BİLEŞENLERİN İÇE AKTARILMASI (COMPONENT IMPORTS) ---
 import Navbar from './assets/NavBar';
@@ -43,16 +43,46 @@ function App() {
   const [ratingOrder, setRatingOrder] = useState(null); // Puanlama penceresi için
 
   // Ürün Kataloğu (Yönetici panelinden stok durumu değiştirilebilir)
-  const [products, setProducts] = useState([
-    { id: 1, name: "Filtre Kahve", price: 45, category: "Sıcak İçecekler", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80", description: "Yoğun aromalı taze demlenmiş kahve.", inStock: true },
-    { id: 2, name: "Latte", price: 60, category: "Sıcak İçecekler", image: "/Images/latte.jpg", description: "Espresso ve sıcak sütün mükemmel uyumu.", inStock: true },
-    { id: 3, name: "Limonata", price: 55, category: "Soğuk İçecekler", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&q=80", description: "Naneli ferahlatıcı lezzet.", inStock: true },
-    { id: 4, name: "Körili Makarna", price: 95, category: "Yemekler", image: "/Images/koriliMakarna.jpg", description: "", inStock: true },
-    { id: 5, name: "Tavuk Pilav", price: 70, category: "Yemekler", image: "/Images/tavukpilav.jpg", description: "", inStock: false }, 
-    { id: 6, name: "Oralet", price: 80, category: "Sıcak İçecekler", image: "/Images/oralet.jpg", description: "", inStock: true },
-  ]);
+  // BAŞLANGIÇTA BOŞ DİZİ OLUŞTURUYORUZ
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  
 
   const categories = ["Tümü", "Yemekler", "Soğuk İçecekler", "Sıcak İçecekler"];
+
+  // SAYFA YÜKLENDİĞİNDE BACKEND'DEN VERİ ÇEKME (FETCH)
+  useEffect(() => {
+  fetch("http://127.0.0.1:5001/api/products")
+    .then(res => res.json())
+    .then(data => {
+      console.log("Backend'den gelen ürünler:", data);
+      
+      // Görseli olmayan ürünlere kategoriye göre geçici görsel atama
+      const enrichedData = data.map(p => {
+        if (p.image) return p; // Görsel varsa dokunma
+        let img = "https://via.placeholder.com/300x200?text=PointCafe";
+        if (p.category === "Yemekler") img = "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&auto=format&fit=crop&q=60";
+        else if (p.category === "Soğuk İçecekler") img = "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&auto=format&fit=crop&q=60";
+        else if (p.category === "Sıcak İçecekler") img = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&auto=format&fit=crop&q=60";
+        return { ...p, image: img };
+      });
+
+      setProducts(enrichedData);
+      setFilteredProducts(enrichedData); 
+    })
+    .catch(err => console.error(err));
+}, []);
+
+  useEffect(() => {
+  if (activeCategory === "Tümü") {
+    setFilteredProducts(products);
+  } else {
+    setFilteredProducts(
+      products.filter(p => p.category === activeCategory)
+    );
+  }
+}, [activeCategory, products]);
+
 
   // ========================================================================
   // 2. İŞ MANTIĞI FONKSİYONLARI (BUSINESS LOGIC)
@@ -162,9 +192,6 @@ function App() {
         setRatingOrder(null);
     }
   };
-
-  // Kategori Filtreleme
-  const filteredProducts = activeCategory === "Tümü" ? products : products.filter(p => p.category === activeCategory);
 
   // ========================================================================
   // 3. RENDER (GÖRÜNÜM KATMANI)
@@ -313,17 +340,20 @@ function App() {
             
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onAdd={handleAddToCart} 
+                {filteredProducts.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAdd={handleAddToCart}
                   />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 text-gray-400">Bu kategoride ürün bulunamadı.</div>
+              <div className="text-center py-10 text-gray-400">
+                Bu kategoride ürün bulunamadı.
+              </div>
             )}
+
           </div>
         </>
       )}
