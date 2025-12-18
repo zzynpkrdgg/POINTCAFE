@@ -92,22 +92,12 @@ function App() {
    * Giriş başarılı olduğunda çalışır.
    * Backend simülasyonu yaparak kullanıcı rolüne göre veri atar.
    */
-  const handleLoginSuccess = (role) => {
-    const mockUser = role === 'student' ? {
-        name: "Fikret Kutluay",
-        role: "student",
-        studentId: "23291277",
-        email: "23291277@ankara.edu.tr"
-    } : {
-        name: "Kafe Yöneticisi",
-        role: "staff",
-        studentId: "-",
-        email: "admin@point.com"
-    };
-
-    setUserInfo(mockUser);
+    const handleLoginSuccess = (userData) => {
+    setUserInfo(userData); 
     setIsLoggedIn(true);
-    if(role === 'student') setActiveTab("menu");
+    if (userData.role === 'student') {
+      setActiveTab("menu");
+    }
   };
 
   /**
