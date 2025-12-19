@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // --- BİLEŞENLERİN İÇE AKTARILMASI (COMPONENT IMPORTS) ---
 import Navbar from './assets/NavBar';
@@ -14,20 +14,21 @@ import OrderDetailsModal from './assets/OrderDetailsModal';
 import RatingModal from './assets/RatingModal';
 import ProfilePage from './assets/ProfilePage';
 
+
 function App() {
   // ========================================================================
   // 1. STATE YÖNETİMİ (DURUM KONTROLÜ)
   // ========================================================================
 
+  const [tempOrderNote, setTempOrderNote] = useState(""); // Geçici not tutucu
+  const [lastOrderAmount, setLastOrderAmount] = useState(0);
   // Kullanıcı Oturum Bilgileri
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [userInfo, setUserInfo] = useState(null); // Giriş yapanın Ad, Soyad, Rol bilgisi
-
-  // Navigasyon Yönetimi (Hangi ekranın aktif olduğunu tutar)
+   // Navigasyon Yönetimi (Hangi ekranın aktif olduğunu tutar)
   // Değerler: 'menu', 'cart', 'payment', 'success', 'profile'
   const [activeTab, setActiveTab] = useState("menu"); 
   const [activeCategory, setActiveCategory] = useState("Tümü");
-
   // Sipariş Süreç Verileri
   const [cartItems, setCartItems] = useState([]); // Sepetteki anlık ürünler
   const [pickupTime, setPickupTime] = useState(null); // Kullanıcının seçtiği teslim saati
@@ -43,16 +44,81 @@ function App() {
   const [ratingOrder, setRatingOrder] = useState(null); // Puanlama penceresi için
 
   // Ürün Kataloğu (Yönetici panelinden stok durumu değiştirilebilir)
-  const [products, setProducts] = useState([
-    { id: 1, name: "Filtre Kahve", price: 45, category: "Sıcak İçecekler", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80", description: "Yoğun aromalı taze demlenmiş kahve.", inStock: true },
-    { id: 2, name: "Latte", price: 60, category: "Sıcak İçecekler", image: "/Images/latte.jpg", description: "Espresso ve sıcak sütün mükemmel uyumu.", inStock: true },
-    { id: 3, name: "Limonata", price: 55, category: "Soğuk İçecekler", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&q=80", description: "Naneli ferahlatıcı lezzet.", inStock: true },
-    { id: 4, name: "Körili Makarna", price: 95, category: "Yemekler", image: "/Images/koriliMakarna.jpg", description: "", inStock: true },
-    { id: 5, name: "Tavuk Pilav", price: 70, category: "Yemekler", image: "/Images/tavukpilav.jpg", description: "", inStock: false }, 
-    { id: 6, name: "Oralet", price: 80, category: "Sıcak İçecekler", image: "/Images/oralet.jpg", description: "", inStock: true },
-  ]);
+  // BAŞLANGIÇTA BOŞ DİZİ OLUŞTURUYORUZ
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  
 
   const categories = ["Tümü", "Yemekler", "Soğuk İçecekler", "Sıcak İçecekler"];
+  
+  // 1. OTURUMU HATIRLAMA 
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      setUserInfo(parsedUser);
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  // SAYFA YÜKLENDİĞİNDE BACKEND'DEN VERİ ÇEKME (FETCH)
+  useEffect(() => {
+  fetch("http://127.0.0.1:5001/api/products")
+    .then(res => res.json())
+    .then(data => {
+      console.log("Backend'den gelen ürünler:", data);
+
+      setProducts(data);
+      setFilteredProducts(data); 
+    })
+    .catch(err => console.error(err));
+}, []);
+
+  useEffect(() => {
+  if (activeCategory === "Tümü") {
+    setFilteredProducts(products);
+  } else {
+    setFilteredProducts(
+      products.filter(p => p.category === activeCategory)
+    );
+  }
+}, [activeCategory, products]);
+
+  // Siparişleri düzenli aralıklarla backend'den çekme
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchOrders = async () => {
+  try {
+    let url = "http://localhost:5001/api/orders";
+    if (userInfo && userInfo.role === 'student') {
+      url += `?email=${userInfo.email}`;
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.success) {
+      const active = data.orders
+        .filter(o => ['Hazırlanıyor', 'Hazırlanıyor_Basladi', 'Hazır', 'Teslim Edildi'].includes(o.status))
+        .map(o => ({
+          ...o,
+        }));
+      
+      const past = data.orders.filter(o => o.status === 'Tamamlandı');
+
+      setActiveOrders(active);
+      setPastOrders(past);
+    }
+  } catch (error) {
+    console.error("Siparişler çekilemedi:", error);
+  }
+};
+
+      fetchOrders(); 
+      const interval = setInterval(fetchOrders, 10000); 
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, userInfo]); // userInfo eklendi çünkü email'e ihtiyacımız var
 
   // ========================================================================
   // 2. İŞ MANTIĞI FONKSİYONLARI (BUSINESS LOGIC)
@@ -62,22 +128,16 @@ function App() {
    * Giriş başarılı olduğunda çalışır.
    * Backend simülasyonu yaparak kullanıcı rolüne göre veri atar.
    */
-  const handleLoginSuccess = (role) => {
-    const mockUser = role === 'student' ? {
-        name: "Fikret Kutluay",
-        role: "student",
-        studentId: "23291277",
-        email: "23291277@ankara.edu.tr"
-    } : {
-        name: "Kafe Yöneticisi",
-        role: "staff",
-        studentId: "-",
-        email: "admin@point.com"
-    };
-
-    setUserInfo(mockUser);
+    const handleLoginSuccess = (userData) => {
+    setUserInfo(userData); 
     setIsLoggedIn(true);
-    if(role === 'student') setActiveTab("menu");
+
+    // SAYFA YENİLENİNCE OTURUMUN GİTMEMESİ İÇİN:
+    localStorage.setItem('user', JSON.stringify(userData));
+
+    if (userData.role === 'student') {
+      setActiveTab("menu");
+    }
   };
 
   /**
@@ -86,6 +146,7 @@ function App() {
    * Böylece demo sırasında öğrenci sipariş verip çıkınca, admin girip o siparişi görebilir.
    */
   const handleLogout = () => {
+    localStorage.removeItem('user'); // Hafızayı sil
     setIsLoggedIn(false);
     setUserInfo(null);
     setCartItems([]);
@@ -111,7 +172,24 @@ function App() {
 
   // Sepetten Ürün Silme
   const handleRemoveFromCart = (productId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+  setCartItems(prevItems => {
+    const existingItem = prevItems.find(item => item.id === productId);
+    
+    if (existingItem && existingItem.quantity > 1) {
+      // Miktar 1'den büyükse sadece azalt
+      return prevItems.map(item =>
+        item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
+      );
+    } else {
+      // Miktar 1 ise veya bulunamadıysa listeden tamamen çıkar
+      return prevItems.filter(item => item.id !== productId);
+    }
+  });
+  };
+
+  // Sepetten Ürünü Miktar Gözetmeksizin Tamamen Sil (Yeni)
+  const handleClearFromCart = (productId) => {
+  setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
   };
 
   const handleTimeSelected = (time) => {
@@ -123,17 +201,6 @@ function App() {
    * Sepeti boşaltır ve yeni bir 'Aktif Sipariş' oluşturur.
    */
   const handleOrderCompleted = (note) => {
-    const newOrder = {
-        id: Math.floor(Math.random() * 10000) + 1000, // 4 haneli rastgele ID
-        items: [...cartItems],
-        totalAmount: cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0),
-        pickupTime: pickupTime,
-        note: note,
-        status: 'Hazırlanıyor',
-        date: new Date().toLocaleDateString('tr-TR')
-    };
-    // Yeni siparişi listenin en başına ekle (LIFO mantığına benzer görünüm için)
-    setActiveOrders(prevOrders => [newOrder, ...prevOrders]);
     setCartItems([]); 
     setActiveTab("success");
   };
@@ -143,28 +210,66 @@ function App() {
    * Eğer durum 'Teslim Edildi' olursa, sipariş silinmez; durumu güncellenir.
    * Böylece öğrenci panelinde 'Puanla' butonu aktif olur.
    */
-  const handleOrderStatusUpdate = (orderId, newStatus) => {
-     setActiveOrders(prev => prev.map(order => 
+  const handleOrderStatusUpdate = async (orderId, newStatus) => {
+  try {
+    const response = await fetch(`http://localhost:5001/api/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    
+    if (response.ok) {
+      // ÖNEMLİ: Eğer admin "Teslim Edildi" dediyse, bu metin MyOrders.jsx'teki 
+      // {order.status === 'Teslim Edildi'} kontrolünü tetikler.
+      setActiveOrders(prev => prev.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
-     ));
-  };
+      ));
+    }
+  } catch (error) {
+    console.error("Durum güncelleme hatası:", error);
+  }
+};
 
+  
   /**
-   * Puanlama ve Arşivleme İşlemi.
-   * Sipariş 'Aktif' listeden çıkarılıp 'Geçmiş' listesine taşınır.
+   * Puanlama ve Arşivleme İşlemi (Backend Bağlantılı)
+   * Siparişi 'Tamamlandı' yapar ve puan/yorum bilgilerini kaydeder.
    */
-  const handleRateAndArchive = (orderId, rating, comment) => {
-    const orderToArchive = activeOrders.find(o => o.id === orderId);
-    if (orderToArchive) {
-        const archivedOrder = { ...orderToArchive, rating, comment, status: 'Tamamlandı' };
-        setPastOrders(prev => [archivedOrder, ...prev]);
+  const handleRateAndArchive = async (orderId, rating, comment) => {
+    try {
+      // 1. Backend'e PATCH isteği gönderiyoruz
+      const response = await fetch(`http://localhost:5001/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'Tamamlandı', // Siparişi arşive taşımak için durumunu güncelliyoruz
+          rating: rating,       // Yıldız puanı
+          comment: comment      // Kullanıcı yorumu
+        })
+      });
+
+      const data = await response.json();
+
+      // App.jsx içindeki fetchOrders fonksiyonunun içi:
+      // App.jsx - fetchOrders içindeki filtreleme kısmı
+      // handleRateAndArchive fonksiyonunun data.success bloğu içi
+      if (data.success) {
+        // 1. Yerel state'den anında sil (Beklememek için)
         setActiveOrders(prev => prev.filter(o => o.id !== orderId));
+        
+        // 2. Geçmişe anında ekle
+        setPastOrders(prev => [{ ...data.order }, ...prev]);
+
+        // 3. Modalı kapat
         setRatingOrder(null);
+      } else {
+        alert("Hata: " + data.message);
+      }
+    } catch (error) {
+      console.error("Puanlama kaydedilirken hata oluştu:", error);
+      alert("Sunucuya bağlanılamadı, puanlama kaydedilemedi.");
     }
   };
-
-  // Kategori Filtreleme
-  const filteredProducts = activeCategory === "Tümü" ? products : products.filter(p => p.category === activeCategory);
 
   // ========================================================================
   // 3. RENDER (GÖRÜNÜM KATMANI)
@@ -206,10 +311,11 @@ function App() {
       )}
 
       <Navbar 
-        cartCount={cartItems.length} 
+        cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
         onGoHome={() => setActiveTab("menu")}
         onGoCart={() => setActiveTab("cart")}
         onLogout={handleLogout}
+        cartItems={cartItems}
       />
 
       {/* --- SAYFA YÖNLENDİRMELERİ (ROUTING SİMÜLASYONU) --- */}
@@ -222,18 +328,59 @@ function App() {
             onGoBack={() => setActiveTab("menu")}
          />
 
-      /* 2. SEPET SAYFASI */
+      /* 2. SEPET SAYFASI (activeTab === "cart") */
       ) : activeTab === "cart" ? (
         <CartPage 
           cartItems={cartItems} 
           onRemove={handleRemoveFromCart} 
+          onClear={handleClearFromCart}
           onGoBack={() => setActiveTab("menu")} 
-          onConfirm={() => {
+          onConfirm={async (userNote) => { 
             if (!pickupTime) {
-                alert("Lütfen yukarıdaki menüden bir teslim alma saati seçiniz!");
-                setActiveTab("menu");
-            } else {
-                setActiveTab("payment");
+              alert("Lütfen bir teslim alma saati seçiniz!");
+              setActiveTab("menu");
+              return;
+            }
+
+            // Backend'e gönderilecek paket (totalAmount ve price SİLİNDİ)
+            const orderData = {
+              userName: userInfo?.name || "Bilinmeyen Öğrenci",
+              userEmail: userInfo?.email,
+              items: cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+              })),
+              pickupTime: pickupTime,
+              note: userNote,
+              status: "Hazırlanıyor"
+            };
+
+            try {
+              const response = await fetch("http://localhost:5001/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orderData)
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                // BACKEND'İN HESAPLADIĞI TUTARI KAYDET
+                setLastOrderAmount(data.order.totalAmount); 
+                
+                if (typeof setTempOrderNote === 'function') {
+                  setTempOrderNote(userNote);
+                }
+
+                setCartItems([]); 
+                setActiveTab("payment"); 
+              } else {
+                alert("Hata: " + data.message);
+              }
+            } catch (error) {
+              console.error("Hata:", error);
             }
           }}
         />
@@ -241,7 +388,7 @@ function App() {
       /* 3. ÖDEME SAYFASI */
       ) : activeTab === "payment" ? (
         <PaymentPage 
-           totalAmount={cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
+           totalAmount={lastOrderAmount}
            pickupTime={pickupTime}
            onBack={() => setActiveTab("cart")}
            onCompleteOrder={handleOrderCompleted}
@@ -313,17 +460,23 @@ function App() {
             
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onAdd={handleAddToCart} 
+                {filteredProducts.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAdd={handleAddToCart}
+
+                    onRemove={handleRemoveFromCart} 
+                    cartItems={cartItems}
                   />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 text-gray-400">Bu kategoride ürün bulunamadı.</div>
+              <div className="text-center py-10 text-gray-400">
+                Bu kategoride ürün bulunamadı.
+              </div>
             )}
+
           </div>
         </>
       )}
