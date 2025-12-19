@@ -20,15 +20,13 @@ const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
 
   // ÖDEME BUTONUNA BASILINCA ÇALIŞAN FONKSİYON
   const handlePay = (e) => {
-    e.preventDefault(); // Sayfanın yenilenmesini engelle
-    setIsProcessing(true); // Yükleniyor modunu aç (Buton döner)
-    
-    // BACKEND SİMÜLASYONU:
-    // Gerçekte burada API'ye istek atılır. Biz 2 saniye bekletip başarılı sayıyoruz.
-    setTimeout(() => {
-      setIsProcessing(false); // Yükleniyor modunu kapat
-      onCompleteOrder(orderNote); // App.js'e "Bitti, al bu da notu" de.
-    }, 2000);
+  e.preventDefault();
+  setIsProcessing(true);
+  
+  setTimeout(() => {
+    setIsProcessing(false);
+    onCompleteOrder(); // Artık not parametresi göndermesine gerek yok, not zaten App.jsx'te var.
+  }, 2000);
   };
 
   return (
@@ -132,16 +130,7 @@ const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
           )}
         </div>
 
-        {/* 4. SİPARİŞ NOTU (Raporda istenen özellik) */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 mb-2">Sipariş Notu</h3>
-          <textarea 
-            value={orderNote}
-            onChange={(e) => setOrderNote(e.target.value)}
-            placeholder="Örn: Kahve çok sıcak olsun, ketçap istemiyorum..."
-            className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm h-24 resize-none"
-          ></textarea>
-        </div>
+        {/* 4. SİPARİŞ NOTU ALANI */}
       </div>
 
       {/* --- ALT SABİT BUTON --- */}
