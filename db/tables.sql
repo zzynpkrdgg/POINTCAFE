@@ -1,6 +1,6 @@
 -- Tüm kullanıcıların temel bilgileri
 CREATE TABLE USERS (
-    UserID INT PRIMARY KEY,
+    UserID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     UserName VARCHAR(30) NOT NULL,
     UserSurname VARCHAR(30) NOT NULL,
     Password VARCHAR(255) NOT NULL, -- Hash zorunlu
