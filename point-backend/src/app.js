@@ -53,7 +53,9 @@ async function testDatabaseConnection() {
 }
 
 // Ana sayfa tasarımı
+// Ana sayfa tasarımı (UTF-8 desteği eklendi)
 app.get("/", (req, res) => { 
+  res.setHeader('Content-Type', 'text/html; charset=utf-8'); // Türkçe karakterler için
   res.send(`
     <div style="text-align:center; margin-top:100px; font-family: Arial, sans-serif;">
       <h1 style="color: #2c3e50;">☕ PointCafe API'ye Hoş Geldiniz</h1>
@@ -65,6 +67,7 @@ app.get("/", (req, res) => {
   `);
 });
 
+const PORT = 3000;
 /**
  * 🚀 UYGULAMAYI BAŞLAT
  * Önce veritabanını test eder, sonra Express sunucusunu dışa aktarır veya başlatır.
@@ -72,10 +75,17 @@ app.get("/", (req, res) => {
 testDatabaseConnection().then(isReady => {
     if (isReady) {
         console.log("🚀 Sunucu hazır ve rotalar yüklendi.");
+          // SUNUCUYU DİNLEMEYE BAŞLATAN EKSİK KOMUT:
+          app.listen(PORT, () => {
+              console.log("-----------------------------------------");
+              console.log(`🚀 Sunucu başarıyla başlatıldı!`);
+              console.log(`🌐 Tarayıcıdan erişmek için: http://localhost:${PORT}`);
+              console.log("-----------------------------------------");
+          });
     } else {
         console.error("🛑 Uygulama veritabanı hatası nedeniyle kısıtlı modda.");
     }
 });
 
 export default app;
-export default app;
+
