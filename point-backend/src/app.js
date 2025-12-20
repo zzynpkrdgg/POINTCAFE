@@ -78,4 +78,4 @@ testDatabaseConnection().then(isReady => {
 });
 
 export default app;
-export default app;
+
