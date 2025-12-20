@@ -14,7 +14,7 @@ export const getAllProducts = async () => {
 // Raporundaki 'Kategori' ihtiyacı için belirli kategorideki ürünleri getirme [cite: 99, 283]
 export const getProductsByCategory = async (categoryId) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM PRODUCT WHERE CategoryID = ?", [categoryId]);
+    const [rows] = await db.execute("SELECT * FROM PRODUCT WHERE CategoryID = ?", [categoryId] || null);
     return rows;
   } catch (error) {
     throw error;
