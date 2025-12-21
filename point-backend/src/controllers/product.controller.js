@@ -9,4 +9,4 @@ export const getProducts = async(req, res) => {
   console.error("getProducts Hatası:", error.message);
   res.status(500).json({ message: "Ürünler yüklenirken bir hata oluştu." });
 }
-};git
+};
