@@ -152,18 +152,25 @@ function App() {
     setCartItems([]);
   };
 
-  // Yönetici Panelinden Stok Durumu (Var/Yok) Değiştirme
-  const handleStockToggle = (productId) => {
-    setProducts(prevProducts => prevProducts.map(p => p.id === productId ? { ...p, inStock: !p.inStock } : p));
-  };
+ // Yönetici Panelinden Stok Durumu Değiştirme
+const handleStockToggle = (productId) => {
+  setProducts(prevProducts => 
+    prevProducts.map(p => 
+      // id yerine ProductID kontrolü yapıyoruz
+      p.ProductID === productId 
+        ? { ...p, TotalStock: p.TotalStock > 0 ? 0 : 10 } // Varsa 0 yapar, yoksa 10 ekler
+        : p
+    )
+  );
+};
 
   // Sepete Ürün Ekleme (Aynı ürün varsa miktar artırır)
   const handleAddToCart = (product) => {
-    if (!product.inStock) return; // Stok kontrolü
+    if (!product.TotalStock===0) return; // Stok kontrolü
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
+      const existingItem = prevItems.find(item => item.id === product.ProductID);
       if (existingItem) {
-        return prevItems.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+        return prevItems.map(item => item.id === product.ProductID ? { ...item, quantity: item.quantity + 1 } : item);
       } else {
         return [...prevItems, { ...product, quantity: 1 }];
       }
@@ -462,7 +469,7 @@ function App() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map(product => (
                   <ProductCard
-                    key={product.id}
+                    key={product.ProductID}
                     product={product}
                     onAdd={handleAddToCart}
 

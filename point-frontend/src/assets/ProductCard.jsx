@@ -9,12 +9,12 @@ function ProductCard({ product, onAdd, onRemove, cartItems }) {
           className="w-full h-full object-cover"
           onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/300x200?text=Görsel+Yok"; }}
         />
-        {/* Stok durumu kontrolü (Bonus) */}
-        {!product.inStock && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-sm">
-            TÜKENDİ
-          </div>
-        )}
+        {/* Stok durumu kontrolü - TotalStock 0 ise TÜKENDİ gösterir */}
+           {product.TotalStock <= 0 && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-sm">
+               TÜKENDİ
+             </div>
+           )}
       </div>
 
       
@@ -28,7 +28,7 @@ function ProductCard({ product, onAdd, onRemove, cartItems }) {
         <p className="text-gray-500 text-sm mb-4 line-clamp-2">{product.description || "Ürün açıklaması yakında eklenecek."}</p>
         
         <div className="mt-auto">
-          {!product.inStock ? (
+          {!product.TotalStock ===0 ? (
             /* Stokta Yok Durumu */
             <button 
               disabled
@@ -36,18 +36,18 @@ function ProductCard({ product, onAdd, onRemove, cartItems }) {
             >
               Stokta Yok
             </button>
-          ) : cartItems?.find(item => item.id === product.id) ? (
+          ) : cartItems?.find(item => item.id === product.ProductID) ? (
             /* Eğer Ürün Sepette Varsa: +/- Kontrolleri */
             <div className="flex items-center justify-between bg-gray-100 rounded-lg p-1 border border-gray-200">
               <button 
-                onClick={() => onRemove(product.id)}
+                onClick={() => onRemove(product.ProductID)}
                 className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-rose-600 font-bold hover:bg-rose-50 transition-colors"
               >
                 -
               </button>
               
               <span className="font-bold text-gray-800">
-                {cartItems.find(item => item.id === product.id).quantity}
+                {cartItems.find(item => item.id === product.ProductID).quantity}
               </span>
               
               <button 

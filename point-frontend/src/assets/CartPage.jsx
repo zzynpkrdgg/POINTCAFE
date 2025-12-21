@@ -37,7 +37,7 @@ function CartPage({ cartItems, onRemove, onClear, onAdd, onGoBack, onConfirm }) 
         {/* SOL TARAF: Ürün Listesi */}
         <div className="md:col-span-2 space-y-4">
           {cartItems.map((item) => (
-            <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 items-center">
+            <div key={item.ProductID} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 items-center">
               <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg bg-gray-100 shrink-0" />
               
               <div className="flex-1">

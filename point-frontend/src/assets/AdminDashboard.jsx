@@ -176,15 +176,15 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                <table className="w-full text-left font-sans">
                   <tbody className="divide-y divide-gray-50 font-sans">
                     {products.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={product.ProductID} className="hover:bg-gray-50 transition-colors">
                         <td className="p-5 flex items-center gap-4">
                           <img src={product.image} alt={product.name} className="w-12 h-12 rounded-2xl bg-gray-100 object-cover shadow-sm"/>
                           <span className="font-bold text-gray-700 text-base">{product.name}</span>
                         </td>
                         <td className="p-5 font-black text-gray-900 text-lg">{product.price}₺</td>
                         <td className="p-5 text-right pr-8">
-                           <button onClick={() => onUpdateStock(product.id)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 ${product.inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                             {product.inStock ? '● SATIŞTA' : '○ TÜKENDİ'}
+                           <button onClick={() => onUpdateStock(product.ProductID)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 ${product.TotalStock !==0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                             {product.TotalStock !==0 ? '● SATIŞTA' : '○ TÜKENDİ'}
                            </button>
                         </td>
                       </tr>
