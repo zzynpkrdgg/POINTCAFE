@@ -1,9 +1,11 @@
-import db from "../config/db.js"; // Veri tabanı bağlantı dosyanın yolu
+import db from "../config/db.js";
 
 export const getAllProducts = async () => {
   try {
-    // Tasarım raporundaki PRODUCT tablosundan tüm verileri çekiyoruz [cite: 282]
-    const [rows] = await db.execute("SELECT * FROM PRODUCT");
+    // Sütun isimlerini frontend'in beklediği isimlere (name, price) çeviriyoruz
+    const [rows] = await db.execute(
+      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT"
+    );
     return rows;
   } catch (error) {
     console.error("Ürünler çekilirken hata oluştu:", error);
@@ -11,10 +13,12 @@ export const getAllProducts = async () => {
   }
 };
 
-// Raporundaki 'Kategori' ihtiyacı için belirli kategorideki ürünleri getirme [cite: 99, 283]
 export const getProductsByCategory = async (categoryId) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM PRODUCT WHERE CategoryID = ?", [categoryId] || null);
+    const [rows] = await db.execute(
+      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT WHERE CategoryID = ?", 
+      [categoryId]
+    );
     return rows;
   } catch (error) {
     throw error;
