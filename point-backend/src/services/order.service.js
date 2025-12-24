@@ -1,33 +1,53 @@
 import db from "../config/db.js";
 
 export const createOrder = async (orderData) => {
-  console.log("Frontend'den gelen veri işleniyor...");
+  console.log("Frontend'den gelen veri:", orderData);
 
-  // 1. Ana sipariş bilgilerini alıyoruz
-  const UserID = orderData.UserID || 1; 
+  // 1. Ana sipariş bilgilerini hazırlıyoruz
+  const UserID = orderData.UserID;
+  // Fiyatı backend'de tekrar hesaplamak güvenlidir
   const Total_Price = orderData.items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
   const OrderStatus = orderData.status || 'Hazırlanıyor';
-  
+  // Frontend'den gelen teslim saatini alıyoruz, yoksa şu anki saati kullanıyoruz
+  const OrderTime = orderData.pickupTime || new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+  const connection = await db.getConnection();
+  await connection.beginTransaction();
+
   try {
-    // A. Önce ORDERS tablosuna ana siparişi kaydediyoruz
-    const [result] = await db.execute(
-      "INSERT INTO ORDERS (UserID, OrderTime, Total_Price, OrderStatus, CreatedAt) VALUES (?, CURTIME(), ?, ?, NOW())",
-      [UserID, Total_Price, OrderStatus]
+    // A. ORDERS tablosuna kayıt
+    const [result] = await connection.execute(
+      "INSERT INTO ORDERS (UserID, OrderTime, Total_Price, OrderStatus, Note, CreatedAt) VALUES (?, ?, ?, ?, ?, NOW())",
+      [UserID, OrderTime, Total_Price, OrderStatus, orderData.note || '']
     );
 
-    // B. DİNAMİK STOK DÜŞÜRME: Sepetteki her ürün için döngü çalıştırıyoruz
-    // Frontend'den gelen 'items' listesini geziyoruz
+    const newOrderId = result.insertId;
+    console.log("Oluşturulan Sipariş ID:", newOrderId);
+
+    // B. ORDER_ITEM Kaydı ve Stok Düşme
     for (const item of orderData.items) {
-      await db.execute(
-        "UPDATE PRODUCT SET TotalStock = TotalStock - ? WHERE ProductID = ?",
-        [item.quantity, item.id] // Terminalde gördüğümüz 'quantity' ve 'id' değerlerini kullanıyoruz
+      // 1. İlişki tablosuna ekle
+      await connection.execute(
+        "INSERT INTO ORDER_ITEM (OrderID, ProductID, Quantity) VALUES (?, ?, ?)",
+        [newOrderId, item.id, item.quantity]
       );
-      console.log(`✅ Stok düşürüldü: ${item.name} - Miktar: ${item.quantity}`);
+
+      // 2. Stoktan şimdilik düşmüyoruz, teslim edildiğinde düşeceğiz.
+      // await connection.execute(
+      //   "UPDATE PRODUCT SET TotalStock = TotalStock - ? WHERE ProductID = ?",
+      //   [item.quantity, item.id]
+      // );
     }
 
-    return { OrderID: result.insertId, ...orderData };
+    await connection.commit();
+    // Frontend'in beklediği 'totalAmount' alanını ekliyoruz
+    return { OrderID: newOrderId, totalAmount: Total_Price, ...orderData };
+
   } catch (error) {
-    console.error("❌ Sipariş/Stok Hatası:", error.message);
+    await connection.rollback();
+    console.error("❌ Sipariş Oluşturma Hatası:", error.message);
     throw error;
+  } finally {
+    connection.release();
   }
 };

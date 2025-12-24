@@ -2,9 +2,17 @@ import db from "../config/db.js";
 
 export const getAllProducts = async () => {
   try {
-    // Sütun isimlerini frontend'in beklediği isimlere (name, price) çeviriyoruz
     const [rows] = await db.execute(
-      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT"
+      `SELECT 
+        p.ProductID, 
+        p.ProductID as id, 
+        p.CategoryID,
+        p.ProductName as name, 
+        p.ProductPrice as price, 
+        p.TotalStock, 
+        c.CategoryName as category 
+       FROM PRODUCT p 
+       JOIN CATEGORY c ON p.CategoryID = c.CategoryID`
     );
     return rows;
   } catch (error) {
@@ -16,11 +24,34 @@ export const getAllProducts = async () => {
 export const getProductsByCategory = async (categoryId) => {
   try {
     const [rows] = await db.execute(
-      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT WHERE CategoryID = ?", 
+      `SELECT 
+        p.ProductID, 
+        p.ProductID as id, 
+        p.CategoryID,
+        p.ProductName as name, 
+        p.ProductPrice as price, 
+        p.TotalStock, 
+        c.CategoryName as category 
+       FROM PRODUCT p 
+       JOIN CATEGORY c ON p.CategoryID = c.CategoryID
+       WHERE p.CategoryID = ?`,
       [categoryId]
     );
     return rows;
   } catch (error) {
+    throw error;
+  }
+};
+
+export const updateStock = async (productId, newStock) => {
+  try {
+    const [result] = await db.execute(
+      "UPDATE PRODUCT SET TotalStock = ? WHERE ProductID = ?",
+      [newStock, productId]
+    );
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error("Stok güncelleme hatası:", error);
     throw error;
   }
 };
