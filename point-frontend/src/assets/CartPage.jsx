@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ProductIcon from './ProductIcon';
 import { Trash2, ArrowLeft, MessageSquare, Plus, Minus } from 'lucide-react';
 
 // PROPS'a onClear ve onAdd eklendi (App.jsx'ten gönderdiğin fonksiyonlar)
@@ -38,7 +39,7 @@ function CartPage({ cartItems, onRemove, onClear, onAdd, onGoBack, onConfirm }) 
         <div className="md:col-span-2 space-y-4">
           {cartItems.map((item) => (
             <div key={item.ProductID} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 items-center">
-              <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg bg-gray-100 shrink-0" />
+              <ProductIcon product={item} className="w-24 h-24 rounded-lg shrink-0" iconSize="text-4xl" />
 
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-800 capitalize">{item.name}</h3>

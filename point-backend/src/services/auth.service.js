@@ -3,44 +3,58 @@ import bcrypt from "bcrypt";
 
 // KULLANICI KAYIT (Register)
 export const registerUser = async (userData) => {
-  // Frontend'den küçük harfle veya büyük harfle gelebilir
-  const UserName = userData.UserName || userData.userName || userData.firstName;
-  const UserSurname = userData.UserSurname || userData.userSurname || userData.lastName;
-  const Email = userData.Email || userData.email;
-  const Password = userData.Password || userData.password;
-  const PhoneNumber = userData.PhoneNumber || userData.phoneNumber || null;
-
-  // Debug: Gelen verileri logla
-  console.log("🔍 Register - req.body:", JSON.stringify(userData));
-  console.log("🔍 Register - Parsed:", {
-    UserName,
-    UserSurname,
-    Email,
-    Password: Password ? "***" : "undefined",
-    PasswordType: typeof Password,
-    PhoneNumber
-  });
-
-  // Validation - Daha sıkı kontrol
-  if (!UserName || UserName.trim() === '') {
-    throw new Error("Ad gereklidir!");
-  }
-  if (!UserSurname || UserSurname.trim() === '') {
-    throw new Error("Soyad gereklidir!");
-  }
-  if (!Email || Email.trim() === '') {
-    throw new Error("E-posta gereklidir!");
-  }
-  if (!Password || Password.trim() === '' || typeof Password !== 'string') {
-    throw new Error("Şifre gereklidir!");
-  }
-
   try {
-    // 0. İlk kullanıcı mı kontrol et
-    const [allUsers] = await db.execute("SELECT COUNT(*) as count FROM USERS");
-    const isFirstUser = allUsers[0].count === 0;
+    // Frontend'den küçük harfle veya büyük harfle gelebilir
+    const UserName = userData.UserName || userData.userName || userData.firstName;
+    const UserSurname = userData.UserSurname || userData.userSurname || userData.lastName;
+    const Email = (userData.Email || userData.email || "").toLowerCase();
+    const Password = userData.Password || userData.password;
+    const PhoneNumber = userData.PhoneNumber || userData.phoneNumber || null;
 
-    // 1. Email kontrolü
+    // Debug: Gelen verileri logla
+    console.log("🔍 Register - req.body:", JSON.stringify(userData));
+    console.log("🔍 Register - Parsed:", {
+      UserName,
+      UserSurname,
+      Email,
+      Password: Password ? "***" : "undefined",
+      PasswordType: typeof Password,
+      PhoneNumber
+    });
+
+    // Validation - Daha sıkı kontrol
+    if (!UserName || UserName.trim() === '') {
+      throw new Error("Ad gereklidir!");
+    }
+    if (!UserSurname || UserSurname.trim() === '') {
+      throw new Error("Soyad gereklidir!");
+    }
+    if (!Email || Email.trim() === '') {
+      throw new Error("E-posta gereklidir!");
+    }
+    if (!Password || Password.trim() === '' || typeof Password !== 'string') {
+      throw new Error("Şifre gereklidir!");
+    }
+
+    // 0. DOMAIN KONTROLÜ VE ROL BELİRLEME
+    const isOwnerDomain = Email.endsWith('@point.com');
+    const isStudentDomain = Email.endsWith('@ankara.edu.tr');
+    let assignedRole = '';
+
+    if (isOwnerDomain) {
+      // 1. Yönetici Kontrolü: Zaten bir yönetici var mı?
+      const [existingOwners] = await db.execute("SELECT COUNT(*) as count FROM owner");
+      if (existingOwners[0].count > 0) {
+        throw new Error("Sistemde zaten 1 yönetici kayıtlı! İkinci bir yönetici kaydı yapılamaz.");
+      }
+      assignedRole = 'owner';
+    } else if (isStudentDomain) {
+      assignedRole = 'customer';
+    } else {
+      throw new Error("Sadece '@ankara.edu.tr' (Öğrenci) veya '@point.com' (Personel) adresleri kabul edilmektedir.");
+    }
+
+    // 1. Email kontrolü (Mevcut kullanıcı var mı?)
     const [existingUsers] = await db.execute(
       "SELECT Email FROM USERS WHERE Email = ? AND Is_Deleted = 0",
       [Email]
@@ -61,21 +75,21 @@ export const registerUser = async (userData) => {
     );
     const newUserId = result.insertId;
 
-    // 4. Tablo Dağıtımı
-    if (isFirstUser) {
+    // 4. Tablo Dağıtımı (Role Göre)
+    if (assignedRole === 'owner') {
       await db.execute("INSERT INTO owner (UserID) VALUES (?)", [newUserId]);
     } else {
       await db.execute("INSERT INTO customer (UserID) VALUES (?)", [newUserId]);
     }
 
     // 5. Frontend'e dönecek veri (Tek bir return)
-    return { 
-      UserID: newUserId, 
-      UserName, 
+    return {
+      UserID: newUserId,
+      UserName,
       UserSurname,
       Email,
       PhoneNumber,
-      role: isFirstUser ? 'owner' : 'customer'
+      role: assignedRole
     };
 
   } catch (error) {
@@ -101,11 +115,11 @@ export const loginUser = async (Email, Password) => {
 
     // Şifreyi objeden çıkar
     const { Password: _, ...userWithoutPassword } = user;
-    
+
     // ROL KONTROLÜ: Owner tablosunda var mı?
     const [ownerRows] = await db.execute("SELECT UserID FROM owner WHERE UserID = ?", [user.UserID]);
     const role = ownerRows.length > 0 ? 'owner' : 'customer';
-    
+
     return {
       ...userWithoutPassword,
       role: role
@@ -114,4 +128,10 @@ export const loginUser = async (Email, Password) => {
     console.error("Giriş hatası:", error);
     throw error;
   }
+};
+
+// OWNER KONTROLÜ
+export const checkOwnerExists = async () => {
+  const [rows] = await db.execute("SELECT COUNT(*) as count FROM owner");
+  return rows[0].count > 0;
 };

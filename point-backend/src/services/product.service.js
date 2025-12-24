@@ -30,6 +30,7 @@ export const getProductsByCategory = async (categoryId) => {
         p.CategoryID,
         p.ProductName as name, 
         p.ProductPrice as price, 
+        p.Image as image,
         p.TotalStock, 
         c.CategoryName as category 
        FROM PRODUCT p 

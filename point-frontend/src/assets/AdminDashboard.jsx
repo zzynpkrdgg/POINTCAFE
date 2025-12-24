@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ProductIcon from './ProductIcon';
 
 // PROPS:
 // orders: App.js'den gelen canlı sipariş listesi
@@ -279,7 +280,7 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateStockCount, o
                   {products.map((product) => (
                     <tr key={product.ProductID} className="hover:bg-gray-50 transition-colors">
                       <td className="p-5 flex items-center gap-4">
-                        <img src={product.image} alt={product.name} className="w-12 h-12 rounded-2xl bg-gray-100 object-cover shadow-sm" />
+                        <ProductIcon product={product} className="w-12 h-12 rounded-2xl shadow-sm" iconSize="text-xl" />
                         <span className="font-bold text-gray-700 text-base">{product.name}</span>
                       </td>
                       <td className="p-5 font-black text-gray-900 text-lg">{product.price}₺</td>

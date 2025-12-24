@@ -1,24 +1,11 @@
+import ProductIcon from './ProductIcon';
+
 function ProductCard({ product, onAdd, onRemove, cartItems }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col">
       {/* Ürün Resmi Alanı */}
-      {/* Ürün Görseli (Akıllı Placeholder) */}
-      <div className={`h-40 relative flex items-center justify-center text-6xl shadow-inner
-        ${product.category === 'Yiyecek' ? 'bg-orange-100' :
-          product.category === 'Soğuk İçecek' ? 'bg-blue-100' :
-            product.category === 'Sıcak İçecek' ? 'bg-rose-100' :
-              product.category === 'Pastane' ? 'bg-pink-100' :
-                product.category === 'Market' ? 'bg-green-100' :
-                  'bg-gray-100'}`}
-      >
-        {/* Kategoriye göre ikon */}
-        <span className="transform transition-transform group-hover:scale-110 duration-300 drop-shadow-sm">
-          {product.category === 'Yiyecek' ? '🍔' :
-            product.category === 'Soğuk İçecek' ? '🥤' :
-              product.category === 'Sıcak İçecek' ? '☕' :
-                product.category === 'Pastane' ? '🍰' :
-                  product.category === 'Market' ? '🛒' : '🍴'}
-        </span>
+      <div className="h-40 relative">
+        <ProductIcon product={product} className="w-full h-full" iconSize="text-6xl" />
 
         {/* Stok Tükendi Overlay */}
         {product.TotalStock === 0 && (
