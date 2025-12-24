@@ -8,16 +8,22 @@ import ProductIcon from './ProductIcon';
 const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateStockCount, onUpdateOrderStatus, onLogout }) => {
   const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'products', 'delivered'
   const [expandedOrderId, setExpandedOrderId] = useState(null); // Kart içi ürün detayı için
+  const [stockSearchQuery, setStockSearchQuery] = useState(""); // Stok araması için state
 
   // Siparişleri Durumlarına Göre Ayır
   const activeOrdersList = orders ? orders.filter(o => ['Hazırlanıyor', 'Hazır'].includes(o.status)) : [];
   const deliveredOrdersList = orders ? orders.filter(o => ['Teslim Edildi', 'Tamamlandı'].includes(o.status)) : [];
 
+  // Stok listesi filtreleme
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(stockSearchQuery.toLowerCase())
+  );
+
   return (
     <div className="h-screen bg-gray-100 flex font-sans overflow-hidden text-gray-800">
-
-      {/* --- SOL SIDEBAR (SABİT) --- */}
+      {/* ... SOL SIDEBAR ... */}
       <div className="w-64 bg-rose-900 text-white flex flex-col shadow-2xl h-screen sticky top-0 shrink-0">
+        {/* ... (Sidebar içeriği aynı kalacak) ... */}
         <div className="p-6 text-center border-b border-rose-800">
           <h1 className="text-2xl font-bold italic tracking-tighter">POINT CAFE</h1>
           <p className="text-xs text-rose-200 opacity-70">Yönetici Paneli v1.0</p>
@@ -273,11 +279,36 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateStockCount, o
         {/* === STOK YÖNETİMİ === */}
         {activeTab === 'products' && (
           <div className="max-w-4xl mx-auto font-sans">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 font-sans">Menü & Stok Yönetimi</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 font-sans">Menü & Stok Yönetimi</h2>
+
+              {/* Stok Arama Çubuğu */}
+              <div className="relative w-64">
+                <input
+                  type="text"
+                  placeholder="Ürün Ara..."
+                  value={stockSearchQuery}
+                  onChange={(e) => setStockSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-900 text-sm shadow-sm"
+                />
+                <svg className="absolute left-3 top-2.5 text-gray-400 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                {stockSearchQuery && (
+                  <button
+                    onClick={() => setStockSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
               <table className="w-full text-left font-sans">
                 <tbody className="divide-y divide-gray-50 font-sans">
-                  {products.map((product) => (
+                  {filteredProducts.map((product) => (
                     <tr key={product.ProductID} className="hover:bg-gray-50 transition-colors">
                       <td className="p-5 flex items-center gap-4">
                         <ProductIcon product={product} className="w-12 h-12 rounded-2xl shadow-sm" iconSize="text-xl" />
