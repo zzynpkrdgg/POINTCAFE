@@ -6,32 +6,46 @@ import React, { useState } from 'react';
 // - onBack: "Geri Dön" butonuna basınca çalışacak fonksiyon (Sepete geri atar).
 // - onCompleteOrder: Ödeme başarılı olunca çalışacak fonksiyon (Sipariş notunu iletir).
 const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
-  
+
   // --- STATE (DURUM) YÖNETİMİ ---
-  
+
   // Seçilen ödeme yöntemi: Varsayılan olarak 'credit_card'
-  const [paymentMethod, setPaymentMethod] = useState('credit_card'); 
-  
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
+
+  // Kart Numarası State (Doğrulama için)
+  const [cardNumber, setCardNumber] = useState('');
+
   // Kullanıcının girdiği sipariş notu (Örn: "Ketçap olmasın")
   const [orderNote, setOrderNote] = useState('');
-  
+
   // Ödeme butonuna basıldı mı? (Yükleniyor animasyonu için)
   const [isProcessing, setIsProcessing] = useState(false);
 
   // ÖDEME BUTONUNA BASILINCA ÇALIŞAN FONKSİYON
   const handlePay = (e) => {
-  e.preventDefault();
-  setIsProcessing(true);
-  
-  setTimeout(() => {
-    setIsProcessing(false);
-    onCompleteOrder(); // Artık not parametresi göndermesine gerek yok, not zaten App.jsx'te var.
-  }, 2000);
+    e.preventDefault();
+
+    // 1. Kredi Kartı Seçiliyse ve Numara 16 Haneden Kısaysa Hata Ver
+    if (paymentMethod === 'credit_card') {
+      // Boşlukları temizle ve uzunluğa bak
+      const clearNumber = cardNumber.replace(/\s/g, '');
+      if (clearNumber.length < 16) {
+        alert("Lütfen geçerli (16 haneli) bir kart numarası giriniz.");
+        return; // İşlemi durdur
+      }
+    }
+
+    setIsProcessing(true);
+
+    setTimeout(() => {
+      setIsProcessing(false);
+      onCompleteOrder();
+    }, 2000);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      
+
       {/* --- HEADER (ÜST KISIM) --- */}
       {/* sticky top-0: Sayfa kaydırılsa bile üstte sabit kalır */}
       <div className="bg-white p-4 shadow-sm flex items-center sticky top-0 z-10">
@@ -45,13 +59,13 @@ const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
 
       {/* --- İÇERİK ALANI --- */}
       <div className="p-4 space-y-4 max-w-lg mx-auto w-full pb-24">
-        
+
         {/* 1. ÖZET KARTI (Kırmızı Alan) */}
         <div className="bg-rose-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-rose-200 text-sm mb-1">Toplam Tutar</p>
             <h2 className="text-4xl font-bold mb-4">{totalAmount}₺</h2>
-            
+
             {/* Seçilen Saati Gösteriyoruz - Raporun en önemli özelliği */}
             <div className="flex items-center text-sm bg-rose-800/50 p-2 rounded-lg w-max">
               <span className="mr-2">⏰ Teslim Saati:</span>
@@ -66,28 +80,26 @@ const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <h3 className="font-bold text-gray-800 mb-3">Ödeme Yöntemi</h3>
           <div className="flex gap-3">
-            
+
             {/* Kredi Kartı Seçeneği */}
-            <button 
+            <button
               onClick={() => setPaymentMethod('credit_card')}
-              className={`flex-1 p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${
-                paymentMethod === 'credit_card' 
-                  ? 'border-rose-900 bg-rose-50 text-rose-900' // Seçiliyse Kırmızı
-                  : 'border-gray-200 hover:border-gray-300' // Değilse Gri
-              }`}
+              className={`flex-1 p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethod === 'credit_card'
+                ? 'border-rose-900 bg-rose-50 text-rose-900' // Seçiliyse Kırmızı
+                : 'border-gray-200 hover:border-gray-300' // Değilse Gri
+                }`}
             >
               <span className="text-2xl">💳</span>
               <span className="text-xs font-bold">Kredi Kartı</span>
             </button>
-            
+
             {/* Kampüs Kart Seçeneği */}
-            <button 
+            <button
               onClick={() => setPaymentMethod('campus_card')}
-              className={`flex-1 p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${
-                paymentMethod === 'campus_card' 
-                  ? 'border-rose-900 bg-rose-50 text-rose-900' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`flex-1 p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethod === 'campus_card'
+                ? 'border-rose-900 bg-rose-50 text-rose-900'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <span className="text-2xl">🎓</span>
               <span className="text-xs font-bold">Kampüs Kart</span>
@@ -99,23 +111,66 @@ const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-fade-in">
           {paymentMethod === 'credit_card' ? (
             // Kredi Kartı Formu (Görseldir, veri göndermez)
+            // Kredi Kartı Formu
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase">Kart Sahibi</label>
-                <input type="text" placeholder="Ad Soyad" className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm" />
+                <input
+                  type="text"
+                  placeholder="Ad Soyad"
+                  className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm"
+                  onChange={(e) => {
+                    // Sadece harf ve boşluk (Türkçe karakterler dahil)
+                    e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+                  }}
+                />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase">Kart Numarası</label>
-                <input type="text" placeholder="0000 0000 0000 0000" className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm" />
+                <input
+                  type="text"
+                  placeholder="0000 0000 0000 0000"
+                  maxLength="19"
+                  className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm"
+                  onChange={(e) => {
+                    // Sadece rakamlar
+                    let val = e.target.value.replace(/\D/g, '');
+                    // 4'erli gruplama
+                    val = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                    e.target.value = val;
+                    setCardNumber(val);
+                  }}
+                />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-xs font-bold text-gray-500 uppercase">SKT</label>
-                  <input type="text" placeholder="AA/YY" className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm" />
+                  <input
+                    type="text"
+                    placeholder="AA/YY"
+                    maxLength="5"
+                    className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm"
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/\D/g, '');
+                      if (val.length >= 2) {
+                        val = val.slice(0, 2) + '/' + val.slice(2);
+                      }
+                      e.target.value = val;
+                    }}
+                  />
                 </div>
                 <div className="flex-1">
                   <label className="text-xs font-bold text-gray-500 uppercase">CVV</label>
-                  <input type="text" placeholder="123" className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm" />
+                  <input
+                    type="text"
+                    placeholder="123"
+                    maxLength="3"
+                    className="w-full p-3 bg-gray-50 rounded-lg border focus:ring-2 focus:ring-rose-900 outline-none text-sm"
+                    onChange={(e) => {
+                      // Sadece rakam (Max 3)
+                      e.target.value = e.target.value.replace(/\D/g, '');
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -136,12 +191,11 @@ const PaymentPage = ({ totalAmount, pickupTime, onBack, onCompleteOrder }) => {
       {/* --- ALT SABİT BUTON --- */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg z-20">
         <div className="max-w-lg mx-auto">
-          <button 
+          <button
             onClick={handlePay}
             disabled={isProcessing} // İşlenirken tıklanamaz yap
-            className={`w-full py-4 rounded-xl font-bold text-white shadow-lg text-lg flex items-center justify-center transition-all ${
-              isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-rose-900 hover:bg-rose-800 active:scale-95'
-            }`}
+            className={`w-full py-4 rounded-xl font-bold text-white shadow-lg text-lg flex items-center justify-center transition-all ${isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-rose-900 hover:bg-rose-800 active:scale-95'
+              }`}
           >
             {isProcessing ? (
               // Dönen yükleme ikonu (Spinner)
