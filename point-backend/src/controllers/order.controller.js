@@ -1,5 +1,6 @@
-import { createOrder } from "../services/order.service.js";
+import { createOrder, getOrdersService, updateOrderStatusService } from "../services/order.service.js";
 
+// Sipariş Ekleme
 export const addOrder = async (req, res) => {
   try {
     const newOrder = await createOrder(req.body);
@@ -16,11 +17,25 @@ export const addOrder = async (req, res) => {
   }
 };
 
-// Hata almamak için şimdilik bunları da ekleyelim
+// 2. Siparişleri Getirme 
 export const getOrders = async (req, res) => {
-    res.json({ message: "Sipariş listeleme henüz hazır değil" });
+  try {
+    const email = req.query.email;
+    const orders = await getOrdersService(email);
+    res.json({ success: true, orders: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
+// 3. Sipariş Durumu Güncelleme 
 export const updateOrderStatus = async (req, res) => {
-    res.json({ message: "Sipariş güncelleme henüz hazır değil" });
+  try {
+    const { id } = req.params;
+    const { status, rating, comment } = req.body;
+    await updateOrderStatusService(id, status, rating, comment);
+    res.json({ success: true, message: "Sipariş durumu güncellendi" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };

@@ -10,16 +10,16 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
 
   return (
     <div className="h-screen bg-gray-100 flex font-sans overflow-hidden text-gray-800">
-      
+
       {/* --- SOL SIDEBAR (SABİT) --- */}
       <div className="w-64 bg-rose-900 text-white flex flex-col shadow-2xl h-screen sticky top-0 shrink-0">
         <div className="p-6 text-center border-b border-rose-800">
           <h1 className="text-2xl font-bold italic tracking-tighter">POINT CAFE</h1>
           <p className="text-xs text-rose-200 opacity-70">Yönetici Paneli v1.0</p>
         </div>
-        
+
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-          <button 
+          <button
             onClick={() => setActiveTab('orders')}
             className={`w-full flex items-center p-3 rounded-xl transition-all ${activeTab === 'orders' ? 'bg-white text-rose-900 font-bold shadow-lg' : 'hover:bg-rose-800 text-rose-100'}`}
           >
@@ -31,7 +31,7 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
             )}
           </button>
 
-          <button 
+          <button
             onClick={() => setActiveTab('products')}
             className={`w-full flex items-center p-3 rounded-xl transition-all ${activeTab === 'products' ? 'bg-white text-rose-900 font-bold shadow-lg' : 'hover:bg-rose-800 text-rose-100'}`}
           >
@@ -48,11 +48,11 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
 
       {/* --- SAĞ İÇERİK ALANI --- */}
       <div className="flex-1 p-8 overflow-y-auto h-screen">
-        
+
         {activeTab === 'orders' && (
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              Mutfak Ekranı 
+              Mutfak Ekranı
               <span className="ml-3 text-sm font-normal text-gray-500 bg-white px-3 py-1 rounded-full border shadow-sm">
                 Teslim Saati Sıralı
               </span>
@@ -66,19 +66,18 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {orders
-                  .sort((a, b) => (a.pickupTime || "").localeCompare(b.pickupTime || "")) 
+                  .sort((a, b) => (a.pickupTime || "").localeCompare(b.pickupTime || ""))
                   .map((order) => (
-                    <div key={order.id} className={`bg-white rounded-2xl shadow-sm border-l-8 flex flex-col h-[440px] overflow-hidden relative transition-all ${
-                      order.status === 'Hazırlanıyor' ? 'border-yellow-400' : 
-                      order.status === 'Hazır' ? 'border-green-500' : 'border-gray-300'
-                    }`}>
-                      
+                    <div key={order.id} className={`bg-white rounded-2xl shadow-sm border-l-8 flex flex-col h-[440px] overflow-hidden relative transition-all ${order.status === 'Hazırlanıyor' ? 'border-yellow-400' :
+                        order.status === 'Hazır' ? 'border-green-500' : 'border-gray-300'
+                      }`}>
+
                       {/* --- KART ÜSTÜNE AÇILAN TÜM ÜRÜNLER PANELİ --- */}
                       {expandedOrderId === order.id && (
                         <div className="absolute inset-0 bg-white z-20 flex flex-col animate-in slide-in-from-bottom duration-300">
                           <div className="p-4 border-b bg-rose-50 flex justify-between items-center shrink-0">
                             <span className="font-bold text-rose-900 text-base">Tüm Ürünler ({order.items.length})</span>
-                            <button 
+                            <button
                               onClick={() => setExpandedOrderId(null)}
                               className="w-10 h-10 flex items-center justify-center bg-rose-200 text-rose-900 rounded-full font-bold hover:bg-rose-300 transition shadow-sm"
                             >✕</button>
@@ -101,14 +100,13 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                           <span className="block text-2xl font-black text-gray-800 leading-none">{order.pickupTime}</span>
                           <span className="text-sm text-gray-500 font-mono font-bold tracking-tight">#{order.id}</span>
                         </div>
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold shadow-sm border ${
-                          order.status === 'Hazırlanıyor' ? 'bg-blue-100 text-blue-700' : 
-                          order.status === 'Hazırlanıyor_Basladi' ? 'bg-amber-100 text-amber-700 animate-pulse' : 
-                          order.status === 'Hazır' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {order.status === 'Hazırlanıyor' ? 'SİPARİŞ ALINDI' : 
-                           order.status === 'Hazırlanıyor_Basladi' ? 'HAZIRLANIYOR' : 
-                           order.status === 'Hazır' ? 'HAZIR' : order.status.toUpperCase()}
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold shadow-sm border ${order.status === 'Hazırlanıyor' ? 'bg-blue-100 text-blue-700' :
+                            order.status === 'Hazırlanıyor_Basladi' ? 'bg-amber-100 text-amber-700 animate-pulse' :
+                              order.status === 'Hazır' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                          }`}>
+                          {order.status === 'Hazırlanıyor' ? 'SİPARİŞ ALINDI' :
+                            order.status === 'Hazırlanıyor_Basladi' ? 'HAZIRLANIYOR' :
+                              order.status === 'Hazır' ? 'HAZIR' : order.status.toUpperCase()}
                         </span>
                       </div>
 
@@ -122,7 +120,7 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                           ))}
                         </ul>
                         {order.items.length > 2 && (
-                          <button 
+                          <button
                             onClick={() => setExpandedOrderId(order.id)}
                             className="mt-auto text-[11px] text-rose-700 font-bold bg-rose-50 px-2 py-1 rounded-lg border border-rose-100 hover:bg-rose-100 transition-all active:scale-95"
                           >
@@ -173,31 +171,32 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
           <div className="max-w-4xl mx-auto font-sans">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 font-sans">Menü & Stok Yönetimi</h2>
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-               <table className="w-full text-left font-sans">
-                  <tbody className="divide-y divide-gray-50 font-sans">
-                    {products.map((product) => (
-                      <tr key={product.ProductID} className="hover:bg-gray-50 transition-colors">
-                        <td className="p-5 flex items-center gap-4">
-                          <img src={product.image} alt={product.name} className="w-12 h-12 rounded-2xl bg-gray-100 object-cover shadow-sm"/>
-                          <span className="font-bold text-gray-700 text-base">{product.name}</span>
-                        </td>
-                        <td className="p-5 font-black text-gray-900 text-lg">{product.price}₺</td>
-                        <td className="p-5 text-right pr-8">
-                           <button onClick={() => onUpdateStock(product.ProductID)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 ${product.TotalStock !==0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                             {product.TotalStock !==0 ? '● SATIŞTA' : '○ TÜKENDİ'}
-                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
+              <table className="w-full text-left font-sans">
+                <tbody className="divide-y divide-gray-50 font-sans">
+                  {products.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-5 flex items-center gap-4">
+                        <img src={product.image} alt={product.name} className="w-12 h-12 rounded-2xl bg-gray-100 object-cover shadow-sm" />
+                        <span className="font-bold text-gray-700 text-base">{product.name}</span>
+                      </td>
+                      <td className="p-5 font-black text-gray-900 text-lg">{product.price}₺</td>
+                      <td className="p-5 text-right pr-8">
+                        <button onClick={() => onUpdateStock(product.id)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 ${product.stock !== 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {product.stock !== 0 ? '● SATIŞTA' : '○ TÜKENDİ'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
       </div>
 
       {/* SAF CSS: ÖZELLİKLE NOT KISMI İÇİN İNCE VE RENKLİ SCROLLBAR */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .note-scrollbar::-webkit-scrollbar {
           width: 3px;
         }

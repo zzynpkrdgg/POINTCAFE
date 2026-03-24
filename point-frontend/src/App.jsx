@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // --- BİLEŞENLERİN İÇE AKTARILMASI (COMPONENT IMPORTS) ---
 import Navbar from './assets/NavBar';
 import TimeSelector from './assets/TimeSelector';
-import MyOrders from './assets/MyOrders'; 
+import MyOrders from './assets/MyOrders';
 import ProductCard from './assets/ProductCard';
 import CartPage from './assets/CartPage';
 import LoginPage from './assets/LoginPage';
@@ -23,22 +23,22 @@ function App() {
   const [tempOrderNote, setTempOrderNote] = useState(""); // Geçici not tutucu
   const [lastOrderAmount, setLastOrderAmount] = useState(0);
   // Kullanıcı Oturum Bilgileri
-  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null); // Giriş yapanın Ad, Soyad, Rol bilgisi
-   // Navigasyon Yönetimi (Hangi ekranın aktif olduğunu tutar)
+  // Navigasyon Yönetimi (Hangi ekranın aktif olduğunu tutar)
   // Değerler: 'menu', 'cart', 'payment', 'success', 'profile'
-  const [activeTab, setActiveTab] = useState("menu"); 
+  const [activeTab, setActiveTab] = useState("menu");
   const [activeCategory, setActiveCategory] = useState("Tümü");
   // Sipariş Süreç Verileri
   const [cartItems, setCartItems] = useState([]); // Sepetteki anlık ürünler
   const [pickupTime, setPickupTime] = useState(null); // Kullanıcının seçtiği teslim saati
-  
+
   // Veritabanı Simülasyonu (Backend olmadığı için listeleri burada tutuyoruz)
   // activeOrders: Mutfaktaki veya yoldaki siparişler
   // pastOrders: Tamamlanmış ve puanlanmış siparişler
-  const [activeOrders, setActiveOrders] = useState([]); 
-  const [pastOrders, setPastOrders] = useState([]); 
-  
+  const [activeOrders, setActiveOrders] = useState([]);
+  const [pastOrders, setPastOrders] = useState([]);
+
   // Modal (Açılır Pencere) Kontrolleri
   const [selectedOrderForModal, setSelectedOrderForModal] = useState(null); // Detay penceresi için
   const [ratingOrder, setRatingOrder] = useState(null); // Puanlama penceresi için
@@ -47,10 +47,10 @@ function App() {
   // BAŞLANGIÇTA BOŞ DİZİ OLUŞTURUYORUZ
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  
+
 
   const categories = ["Tümü", "Yemekler", "Soğuk İçecekler", "Sıcak İçecekler"];
-  
+
   // 1. OTURUMU HATIRLAMA 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -63,59 +63,59 @@ function App() {
 
   // SAYFA YÜKLENDİĞİNDE BACKEND'DEN VERİ ÇEKME (FETCH)
   useEffect(() => {
-  fetch("http://127.0.0.1:5001/api/products")
-    .then(res => res.json())
-    .then(data => {
-      console.log("Backend'den gelen ürünler:", data);
+    fetch("http://127.0.0.1:5001/api/products")
+      .then(res => res.json())
+      .then(data => {
+        console.log("Backend'den gelen ürünler:", data);
 
-      setProducts(data);
-      setFilteredProducts(data); 
-    })
-    .catch(err => console.error(err));
-}, []);
+        setProducts(data);
+        setFilteredProducts(data);
+      })
+      .catch(err => console.error(err));
+  }, []);
 
   useEffect(() => {
-  if (activeCategory === "Tümü") {
-    setFilteredProducts(products);
-  } else {
-    setFilteredProducts(
-      products.filter(p => p.category === activeCategory)
-    );
-  }
-}, [activeCategory, products]);
+    if (activeCategory === "Tümü") {
+      setFilteredProducts(products);
+    } else {
+      setFilteredProducts(
+        products.filter(p => p.category === activeCategory)
+      );
+    }
+  }, [activeCategory, products]);
 
   // Siparişleri düzenli aralıklarla backend'den çekme
   useEffect(() => {
     if (isLoggedIn) {
       const fetchOrders = async () => {
-  try {
-    let url = "http://localhost:5001/api/orders";
-    if (userInfo && userInfo.role === 'student') {
-      url += `?email=${userInfo.email}`;
-    }
+        try {
+          let url = "http://127.0.0.1:5001/api/orders";
+          if (userInfo && userInfo.role === 'customer') {
+            url += `?email=${userInfo.email}`;
+          }
 
-    const response = await fetch(url);
-    const data = await response.json();
+          const response = await fetch(url);
+          const data = await response.json();
 
-    if (data.success) {
-      const active = data.orders
-        .filter(o => ['Hazırlanıyor', 'Hazırlanıyor_Basladi', 'Hazır', 'Teslim Edildi'].includes(o.status))
-        .map(o => ({
-          ...o,
-        }));
-      
-      const past = data.orders.filter(o => o.status === 'Tamamlandı');
+          if (data.success) {
+            const active = data.orders
+              .filter(o => ['Hazırlanıyor', 'Hazırlanıyor_Basladi', 'Hazır', 'Teslim Edildi'].includes(o.status))
+              .map(o => ({
+                ...o,
+              }));
 
-      setActiveOrders(active);
-      setPastOrders(past);
-    }
-  } catch (error) {
-    console.error("Siparişler çekilemedi:", error);
-  }
-};
+            const past = data.orders.filter(o => o.status === 'Tamamlandı');
 
-      fetchOrders(); 
-      const interval = setInterval(fetchOrders, 10000); 
+            setActiveOrders(active);
+            setPastOrders(past);
+          }
+        } catch (error) {
+          console.error("Siparişler çekilemedi:", error);
+        }
+      };
+
+      fetchOrders();
+      const interval = setInterval(fetchOrders, 10000);
       return () => clearInterval(interval);
     }
   }, [isLoggedIn, userInfo]); // userInfo eklendi çünkü email'e ihtiyacımız var
@@ -128,14 +128,14 @@ function App() {
    * Giriş başarılı olduğunda çalışır.
    * Backend simülasyonu yaparak kullanıcı rolüne göre veri atar.
    */
-    const handleLoginSuccess = (userData) => {
-    setUserInfo(userData); 
+  const handleLoginSuccess = (userData) => {
+    setUserInfo(userData);
     setIsLoggedIn(true);
 
     // SAYFA YENİLENİNCE OTURUMUN GİTMEMESİ İÇİN:
     localStorage.setItem('user', JSON.stringify(userData));
 
-    if (userData.role === 'student') {
+    if (userData.role === 'customer') {
       setActiveTab("menu");
     }
   };
@@ -152,25 +152,40 @@ function App() {
     setCartItems([]);
   };
 
- // Yönetici Panelinden Stok Durumu Değiştirme
-const handleStockToggle = (productId) => {
-  setProducts(prevProducts => 
-    prevProducts.map(p => 
-      // id yerine ProductID kontrolü yapıyoruz
-      p.ProductID === productId 
-        ? { ...p, TotalStock: p.TotalStock > 0 ? 0 : 10 } // Varsa 0 yapar, yoksa 10 ekler
-        : p
-    )
-  );
-};
+  // Yönetici Panelinden Stok Durumu Değiştirme
+  const handleStockToggle = async (productId) => {
+    try {
+      const productToToggle = products.find(p => p.id === productId);
+      if (!productToToggle) return;
+      const newStock = productToToggle.stock > 0 ? 0 : 10;
+
+      // Backend'e stok güncelleme isteği gönderiyoruz
+      await fetch(`http://127.0.0.1:5001/api/products/${productId}/stock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: newStock })
+      });
+
+      // Başarılı olursa veya optimistik olarak frontend state'i güncelliyoruz
+      setProducts(prevProducts =>
+        prevProducts.map(p =>
+          p.id === productId
+            ? { ...p, stock: newStock }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error("Stok güncellenemedi:", error);
+    }
+  };
 
   // Sepete Ürün Ekleme (Aynı ürün varsa miktar artırır)
   const handleAddToCart = (product) => {
-    if (!product.TotalStock===0) return; // Stok kontrolü
+    if (product.stock === 0) return; // Stok kontrolü
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.ProductID);
+      const existingItem = prevItems.find(item => item.id === product.id);
       if (existingItem) {
-        return prevItems.map(item => item.id === product.ProductID ? { ...item, quantity: item.quantity + 1 } : item);
+        return prevItems.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
       } else {
         return [...prevItems, { ...product, quantity: 1 }];
       }
@@ -179,24 +194,24 @@ const handleStockToggle = (productId) => {
 
   // Sepetten Ürün Silme
   const handleRemoveFromCart = (productId) => {
-  setCartItems(prevItems => {
-    const existingItem = prevItems.find(item => item.id === productId);
-    
-    if (existingItem && existingItem.quantity > 1) {
-      // Miktar 1'den büyükse sadece azalt
-      return prevItems.map(item =>
-        item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
-      );
-    } else {
-      // Miktar 1 ise veya bulunamadıysa listeden tamamen çıkar
-      return prevItems.filter(item => item.id !== productId);
-    }
-  });
+    setCartItems(prevItems => {
+      const existingItem = prevItems.find(item => item.id === productId);
+
+      if (existingItem && existingItem.quantity > 1) {
+        // Miktar 1'den büyükse sadece azalt
+        return prevItems.map(item =>
+          item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
+        );
+      } else {
+        // Miktar 1 ise veya bulunamadıysa listeden tamamen çıkar
+        return prevItems.filter(item => item.id !== productId);
+      }
+    });
   };
 
   // Sepetten Ürünü Miktar Gözetmeksizin Tamamen Sil (Yeni)
   const handleClearFromCart = (productId) => {
-  setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
   };
 
   const handleTimeSelected = (time) => {
@@ -208,7 +223,7 @@ const handleStockToggle = (productId) => {
    * Sepeti boşaltır ve yeni bir 'Aktif Sipariş' oluşturur.
    */
   const handleOrderCompleted = (note) => {
-    setCartItems([]); 
+    setCartItems([]);
     setActiveTab("success");
   };
 
@@ -218,26 +233,26 @@ const handleStockToggle = (productId) => {
    * Böylece öğrenci panelinde 'Puanla' butonu aktif olur.
    */
   const handleOrderStatusUpdate = async (orderId, newStatus) => {
-  try {
-    const response = await fetch(`http://localhost:5001/api/orders/${orderId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus })
-    });
-    
-    if (response.ok) {
-      // ÖNEMLİ: Eğer admin "Teslim Edildi" dediyse, bu metin MyOrders.jsx'teki 
-      // {order.status === 'Teslim Edildi'} kontrolünü tetikler.
-      setActiveOrders(prev => prev.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
-    }
-  } catch (error) {
-    console.error("Durum güncelleme hatası:", error);
-  }
-};
+    try {
+      const response = await fetch(`http://127.0.0.1:5001/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
 
-  
+      if (response.ok) {
+        // ÖNEMLİ: Eğer admin "Teslim Edildi" dediyse, bu metin MyOrders.jsx'teki 
+        // {order.status === 'Teslim Edildi'} kontrolünü tetikler.
+        setActiveOrders(prev => prev.map(order =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        ));
+      }
+    } catch (error) {
+      console.error("Durum güncelleme hatası:", error);
+    }
+  };
+
+
   /**
    * Puanlama ve Arşivleme İşlemi (Backend Bağlantılı)
    * Siparişi 'Tamamlandı' yapar ve puan/yorum bilgilerini kaydeder.
@@ -245,10 +260,10 @@ const handleStockToggle = (productId) => {
   const handleRateAndArchive = async (orderId, rating, comment) => {
     try {
       // 1. Backend'e PATCH isteği gönderiyoruz
-      const response = await fetch(`http://localhost:5001/api/orders/${orderId}`, {
+      const response = await fetch(`http://127.0.0.1:5001/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: 'Tamamlandı', // Siparişi arşive taşımak için durumunu güncelliyoruz
           rating: rating,       // Yıldız puanı
           comment: comment      // Kullanıcı yorumu
@@ -263,7 +278,7 @@ const handleStockToggle = (productId) => {
       if (data.success) {
         // 1. Yerel state'den anında sil (Beklememek için)
         setActiveOrders(prev => prev.filter(o => o.id !== orderId));
-        
+
         // 2. Geçmişe anında ekle
         setPastOrders(prev => [{ ...data.order }, ...prev]);
 
@@ -283,16 +298,16 @@ const handleStockToggle = (productId) => {
   // ========================================================================
 
   if (!isLoggedIn) return <LoginPage onLogin={handleLoginSuccess} />;
-  
+
   // Personel Girişi -> Admin Paneli Render Edilir
-  if (userInfo?.role === 'staff') {
+  if (userInfo?.role === 'owner') {
     return (
-      <AdminDashboard 
-          products={products} 
-          orders={activeOrders} 
-          onUpdateStock={handleStockToggle} 
-          onUpdateOrderStatus={handleOrderStatusUpdate} 
-          onLogout={handleLogout} 
+      <AdminDashboard
+        products={products}
+        orders={activeOrders}
+        onUpdateStock={handleStockToggle}
+        onUpdateOrderStatus={handleOrderStatusUpdate}
+        onLogout={handleLogout}
       />
     );
   }
@@ -300,25 +315,25 @@ const handleStockToggle = (productId) => {
   // Öğrenci Girişi -> Ana Uygulama Render Edilir
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      
+
       {/* --- MODALLAR (Sayfanın en üst katmanı) --- */}
       {selectedOrderForModal && (
-        <OrderDetailsModal 
-          order={selectedOrderForModal} 
-          onClose={() => setSelectedOrderForModal(null)} 
+        <OrderDetailsModal
+          order={selectedOrderForModal}
+          onClose={() => setSelectedOrderForModal(null)}
         />
       )}
 
       {ratingOrder && (
-        <RatingModal 
-           order={ratingOrder}
-           onClose={() => setRatingOrder(null)}
-           onSubmit={handleRateAndArchive}
+        <RatingModal
+          order={ratingOrder}
+          onClose={() => setRatingOrder(null)}
+          onSubmit={handleRateAndArchive}
         />
       )}
 
-      <Navbar 
-        cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
+      <Navbar
+        cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
         onGoHome={() => setActiveTab("menu")}
         onGoCart={() => setActiveTab("cart")}
         onLogout={handleLogout}
@@ -329,20 +344,20 @@ const handleStockToggle = (productId) => {
 
       {/* 1. PROFİL SAYFASI */}
       {activeTab === "profile" ? (
-         <ProfilePage 
-            userInfo={userInfo}
-            pastOrders={pastOrders}
-            onGoBack={() => setActiveTab("menu")}
-         />
+        <ProfilePage
+          userInfo={userInfo}
+          pastOrders={pastOrders}
+          onGoBack={() => setActiveTab("menu")}
+        />
 
-      /* 2. SEPET SAYFASI (activeTab === "cart") */
+        /* 2. SEPET SAYFASI (activeTab === "cart") */
       ) : activeTab === "cart" ? (
-        <CartPage 
-          cartItems={cartItems} 
-          onRemove={handleRemoveFromCart} 
+        <CartPage
+          cartItems={cartItems}
+          onRemove={handleRemoveFromCart}
           onClear={handleClearFromCart}
-          onGoBack={() => setActiveTab("menu")} 
-          onConfirm={async (userNote) => { 
+          onGoBack={() => setActiveTab("menu")}
+          onConfirm={async (userNote) => {
             if (!pickupTime) {
               alert("Lütfen bir teslim alma saati seçiniz!");
               setActiveTab("menu");
@@ -351,8 +366,9 @@ const handleStockToggle = (productId) => {
 
             // Backend'e gönderilecek paket (totalAmount ve price SİLİNDİ)
             const orderData = {
-              userName: userInfo?.name || "Bilinmeyen Öğrenci",
-              userEmail: userInfo?.email,
+              UserID: userInfo?.UserID || null,
+              userName: userInfo?.name || userInfo?.UserName || "Bilinmeyen Öğrenci",
+              userEmail: userInfo?.email || userInfo?.Email,
               items: cartItems.map(item => ({
                 id: item.id,
                 name: item.name,
@@ -365,7 +381,7 @@ const handleStockToggle = (productId) => {
             };
 
             try {
-              const response = await fetch("http://localhost:5001/api/orders", {
+              const response = await fetch("http://127.0.0.1:5001/api/orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(orderData)
@@ -375,14 +391,14 @@ const handleStockToggle = (productId) => {
 
               if (data.success) {
                 // BACKEND'İN HESAPLADIĞI TUTARI KAYDET
-                setLastOrderAmount(data.order.totalAmount); 
-                
+                setLastOrderAmount(data.order.totalAmount);
+
                 if (typeof setTempOrderNote === 'function') {
                   setTempOrderNote(userNote);
                 }
 
-                setCartItems([]); 
-                setActiveTab("payment"); 
+                setCartItems([]);
+                setActiveTab("payment");
               } else {
                 alert("Hata: " + data.message);
               }
@@ -391,61 +407,61 @@ const handleStockToggle = (productId) => {
             }
           }}
         />
-      
-      /* 3. ÖDEME SAYFASI */
+
+        /* 3. ÖDEME SAYFASI */
       ) : activeTab === "payment" ? (
-        <PaymentPage 
-           totalAmount={lastOrderAmount}
-           pickupTime={pickupTime}
-           onBack={() => setActiveTab("cart")}
-           onCompleteOrder={handleOrderCompleted}
+        <PaymentPage
+          totalAmount={lastOrderAmount}
+          pickupTime={pickupTime}
+          onBack={() => setActiveTab("cart")}
+          onCompleteOrder={handleOrderCompleted}
         />
 
-      /* 4. BAŞARI SAYFASI */
+        /* 4. BAŞARI SAYFASI */
       ) : activeTab === "success" ? (
-        <OrderSuccess 
-           pickupTime={pickupTime}
-           onGoHome={() => setActiveTab("menu")}
+        <OrderSuccess
+          pickupTime={pickupTime}
+          onGoHome={() => setActiveTab("menu")}
         />
 
-      /* 5. VARSAYILAN: MENÜ SAYFASI */
+        /* 5. VARSAYILAN: MENÜ SAYFASI */
       ) : (
         <>
           {/* Üst Profil Butonu */}
           <div className="bg-rose-900 text-white pb-6 pt-2 px-4 shadow-lg">
-             <div className="container mx-auto max-w-5xl flex justify-between items-center">
-                <span className="text-rose-200 text-sm">Hoş geldin, {userInfo.name} 👋</span>
-                <button 
-                  onClick={() => setActiveTab("profile")}
-                  className="bg-rose-800 hover:bg-rose-700 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1"
-                >
-                  👤 Profilim
-                </button>
-             </div>
+            <div className="container mx-auto max-w-5xl flex justify-between items-center">
+              <span className="text-rose-200 text-sm">Hoş geldin, {userInfo.name} 👋</span>
+              <button
+                onClick={() => setActiveTab("profile")}
+                className="bg-rose-800 hover:bg-rose-700 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1"
+              >
+                👤 Profilim
+              </button>
+            </div>
           </div>
 
           {/* Bilgi ve Takip Alanı */}
           <div className="bg-white pb-6 rounded-b-3xl shadow-sm mb-6 pt-4">
             <div className="container mx-auto px-4 max-w-5xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Sol: Saat Seçici */}
-                    <div>
-                        <TimeSelector onTimeSelect={handleTimeSelected} />
-                        {pickupTime && (
-                             <div className="text-center mt-2 text-rose-900 font-bold text-sm bg-rose-50 py-1 rounded">
-                                Seçilen Saat: {pickupTime}
-                            </div>
-                        )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Sol: Saat Seçici */}
+                <div>
+                  <TimeSelector onTimeSelect={handleTimeSelected} />
+                  {pickupTime && (
+                    <div className="text-center mt-2 text-rose-900 font-bold text-sm bg-rose-50 py-1 rounded">
+                      Seçilen Saat: {pickupTime}
                     </div>
-                    {/* Sağ: Sipariş Takibi */}
-                    <div>
-                        <MyOrders 
-                          orders={activeOrders} 
-                          onViewDetails={(order) => setSelectedOrderForModal(order)}
-                          onRate={(order) => setRatingOrder(order)} 
-                        />
-                    </div>
+                  )}
                 </div>
+                {/* Sağ: Sipariş Takibi */}
+                <div>
+                  <MyOrders
+                    orders={activeOrders}
+                    onViewDetails={(order) => setSelectedOrderForModal(order)}
+                    onRate={(order) => setRatingOrder(order)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -464,16 +480,15 @@ const handleStockToggle = (productId) => {
             </div>
 
             <h2 className="text-xl font-bold text-gray-800 mb-4">{activeCategory} Menüsü</h2>
-            
+
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map(product => (
                   <ProductCard
-                    key={product.ProductID}
+                    key={product.id}
                     product={product}
                     onAdd={handleAddToCart}
-
-                    onRemove={handleRemoveFromCart} 
+                    onRemove={handleRemoveFromCart}
                     cartItems={cartItems}
                   />
                 ))}

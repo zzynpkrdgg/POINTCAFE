@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const LoginPage = ({ onLogin }) => {
   const [formType, setFormType] = useState('login'); // 'login' veya 'register'
-  const [activeTab, setActiveTab] = useState('student'); // 'student' veya 'staff'
+  const [activeTab, setActiveTab] = useState('customer'); // 'customer' veya 'owner'
   
   // Login form state
   const [email, setEmail] = useState('');
@@ -31,14 +31,14 @@ const LoginPage = ({ onLogin }) => {
     // --- KURUMSAL GİRİŞ KONTROLÜ (UX & GÜVENLİK) ---
     
     // 1. Personel sekmesinde öğrenci maili kullanılamaz
-    if (activeTab === 'staff' && !email.endsWith('@point.com')) {
+    if (activeTab === 'owner' && !email.endsWith('@point.com')) {
       setErrorMessage("Öğrenciler lütfen 'Öğrenci' sekmesini kullanarak giriş yapınız.");
       setIsLoading(false);
       return;
     }
 
     // 2. Öğrenci sekmesinde personel/admin maili kullanılamaz
-    if (activeTab === 'student' && email.endsWith('@point.com')) {
+    if (activeTab === 'customer' && email.endsWith('@point.com')) {
       setErrorMessage("Yöneticiler lütfen 'Personel' sekmesini kullanarak giriş yapınız.");
       setIsLoading(false);
       return;
@@ -56,6 +56,7 @@ const LoginPage = ({ onLogin }) => {
       if (data.success) {
         // Ekstra Kontrol: Backend'den gelen rol, seçilen sekmeyle uyumlu mu?
         if (data.user.role !== activeTab) {
+          const beklenenRol = activeTab === 'owner' ? 'Personel' : 'Öğrenci';
             setErrorMessage("Bu hesap seçili giriş türü (Öğrenci/Personel) ile uyumlu değil!");
             setIsLoading(false);
             return;
@@ -118,27 +119,18 @@ const LoginPage = ({ onLogin }) => {
       if (data.success) {
         setSuccessMessage("Kayıt başarılı! Giriş yapabilirsiniz.");
         setIsLoading(false);
-        // Formu temizle ve login ekranına geç
         setTimeout(() => {
           setFormType('login');
+          setActiveTab('customer');
           setEmail(registerData.email);
-          setRegisterData({
-            firstName: '',
-            lastName: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-            phoneNumber: ''
-          });
           setSuccessMessage('');
         }, 2000);
       } else {
-        setErrorMessage(data.message || "Kayıt sırasında bir hata oluştu!");
+        setErrorMessage(data.message || "Kayıt sırasında bir hata oluştu.");
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("Bağlantı hatası:", error);
-      setErrorMessage("Sunucuya bağlanılamadı. Lütfen backend'in çalıştığından emin olun.");
+      setErrorMessage("Sunucuya bağlanılamadı.");
       setIsLoading(false);
     }
   };
@@ -191,15 +183,15 @@ const LoginPage = ({ onLogin }) => {
             <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
               <button 
                 type="button"
-                onClick={() => { setActiveTab('student'); setEmail(''); setErrorMessage(''); }} 
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'student' ? 'bg-white text-rose-900 shadow-sm' : 'text-gray-400'}`}
+                onClick={() => { setActiveTab('customer'); setEmail(''); setErrorMessage(''); }} 
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'customer' ? 'bg-white text-rose-900 shadow-sm' : 'text-gray-400'}`}
               >
                 Öğrenci
               </button>
               <button 
                 type="button"
-                onClick={() => { setActiveTab('staff'); setEmail(''); setErrorMessage(''); }} 
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'staff' ? 'bg-white text-rose-900 shadow-sm' : 'text-gray-400'}`}
+                onClick={() => { setActiveTab('owner'); setEmail(''); setErrorMessage(''); }} 
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'owner' ? 'bg-white text-rose-900 shadow-sm' : 'text-gray-400'}`}
               >
                 Personel
               </button>
@@ -208,7 +200,7 @@ const LoginPage = ({ onLogin }) => {
             <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
-              {activeTab === 'student' ? 'Öğrenci E-Posta' : 'Personel E-Posta'}
+              {activeTab === 'customer' ? 'Öğrenci E-Posta' : 'Personel E-Posta'}
             </label>
             <input 
               type="email" 
@@ -217,7 +209,7 @@ const LoginPage = ({ onLogin }) => {
                 setEmail(e.target.value);
                 setErrorMessage(''); // Kullanıcı yazmaya başladığında hata mesajını temizle
               }}
-              placeholder={activeTab === 'student' ? "ogrenci@ankara.edu.tr" : "admin@point.com"}
+              placeholder={activeTab === 'customer' ? "ogrenci@ankara.edu.tr" : "admin@point.com"}
               className={`w-full px-4 py-3 rounded-xl bg-gray-50 border outline-none transition text-sm focus:ring-2 ${
                 errorMessage ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-rose-900'
               }`}
@@ -259,7 +251,7 @@ const LoginPage = ({ onLogin }) => {
               isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {isLoading ? 'Giriş yapılıyor...' : (activeTab === 'student' ? 'Giriş Yap' : 'Yönetici Girişi')}
+            {isLoading ? 'Giriş yapılıyor...' : (activeTab === 'customer' ? 'Giriş Yap' : 'Yönetici Girişi')}
           </button>
         </form>
           </>

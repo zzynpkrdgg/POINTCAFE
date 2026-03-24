@@ -16,7 +16,7 @@ function ProfilePage({ userInfo, pastOrders, onGoBack }) {
           </div>
           <h1 className="text-2xl font-bold">{userInfo.name}</h1>
           <span className="text-rose-200 text-sm bg-rose-800 px-3 py-1 rounded-full mt-1">
-            {userInfo.role === 'student' ? 'Öğrenci' : 'Personel'}
+            {userInfo.role === 'customer' ? 'Öğrenci' : 'Personel'}
           </span>
         </div>
       </div>
@@ -36,7 +36,7 @@ function ProfilePage({ userInfo, pastOrders, onGoBack }) {
             <div className="bg-gray-100 p-2 rounded-lg"><Hash size={18} /></div>
             <div>
               <p className="text-xs text-gray-400">Öğrenci Numarası</p>
-              <p className="font-medium">{userInfo.studentId}</p>
+              <p className="font-medium">{userInfo.customerId}</p>
             </div>
           </div>
         </div>

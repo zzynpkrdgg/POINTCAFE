@@ -16,11 +16,16 @@ export const getAllProducts = async () => {
 export const getProductsByCategory = async (categoryId) => {
   try {
     const [rows] = await db.execute(
-      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT WHERE CategoryID = ?", 
+      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT WHERE CategoryID = ?",
       [categoryId]
     );
     return rows;
   } catch (error) {
     throw error;
   }
+};
+
+export const updateStockService = async (productId, newStock) => {
+  await db.execute("UPDATE PRODUCT SET TotalStock = ? WHERE ProductID = ?", [newStock, productId]);
+  return { success: true };
 };

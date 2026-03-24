@@ -49,7 +49,7 @@ function TimeSelector({ onTimeSelect }) {
       {/* Seçim yapıldıysa altta bilgilendirme göster */}
       {localSelectedTime && (
         <div className="mt-6 p-3 bg-green-50 text-green-700 text-center rounded-lg border border-green-200 animate-pulse">
-          Siparişiniz <strong>{localSelectedTime}</strong> saatinde hazırlanmaya başlayacak!
+          Siparişiniz <strong>{localSelectedTime}</strong> saatinde hazır olacaktır!
         </div>
       )}
     </div>

@@ -36,7 +36,11 @@ export const registerUser = async (userData) => {
   }
 
   try {
-    // 1. Email'in zaten kullanılıp kullanılmadığını kontrol et
+    // 0. İlk kullanıcı mı kontrol et
+    const [allUsers] = await db.execute("SELECT COUNT(*) as count FROM USERS");
+    const isFirstUser = allUsers[0].count === 0;
+
+    // 1. Email kontrolü
     const [existingUsers] = await db.execute(
       "SELECT Email FROM USERS WHERE Email = ? AND Is_Deleted = 0",
       [Email]
@@ -46,40 +50,34 @@ export const registerUser = async (userData) => {
       throw new Error("Bu e-posta adresi zaten kayıtlı!");
     }
 
-    // 2. Şifreyi şifrele (Hash) - Password'un string olduğundan ve geçerli olduğundan emin ol
-    if (!Password || typeof Password !== 'string' || Password.trim().length === 0) {
-      console.error("❌ Password hatası - Password:", Password, "Type:", typeof Password);
-      throw new Error("Geçerli bir şifre giriniz!");
-    }
-    
-    // Password'u trim'le ve kontrol et
-    const trimmedPassword = Password.trim();
-    if (trimmedPassword.length < 6) {
-      throw new Error("Şifre en az 6 karakter olmalıdır!");
-    }
-    
-    console.log("🔍 Password hash'leniyor - Length:", trimmedPassword.length);
+    // 2. Şifreleme
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(trimmedPassword, salt);
+    const hashedPassword = await bcrypt.hash(Password.trim(), salt);
 
-    // 3. Senin sütun isimlerine göre MySQL'e kaydet
+    // 3. USERS tablosuna kayıt
     const [result] = await db.execute(
       "INSERT INTO USERS (UserName, UserSurname, Email, Password, PhoneNumber, Is_Deleted) VALUES (?, ?, ?, ?, ?, 0)",
       [UserName, UserSurname, Email, hashedPassword, PhoneNumber]
     );
+    const newUserId = result.insertId;
 
-    // 4. Email'e göre role belirle
-    const role = Email.endsWith('@point.com') ? 'staff' : 'student';
-    
-    // 5. Kaydedilen kullanıcıyı döndür (şifre hariç)
+    // 4. Tablo Dağıtımı
+    if (isFirstUser) {
+      await db.execute("INSERT INTO owner (UserID) VALUES (?)", [newUserId]);
+    } else {
+      await db.execute("INSERT INTO customer (UserID) VALUES (?)", [newUserId]);
+    }
+
+    // 5. Frontend'e dönecek veri (Tek bir return)
     return { 
-      UserID: result.insertId, 
+      UserID: newUserId, 
       UserName, 
       UserSurname,
       Email,
       PhoneNumber,
-      role
+      role: isFirstUser ? 'owner' : 'customer'
     };
+
   } catch (error) {
     console.error("Kayıt hatası:", error);
     throw error;
@@ -89,34 +87,31 @@ export const registerUser = async (userData) => {
 // KULLANICI GİRİŞİ (Login)
 export const loginUser = async (Email, Password) => {
   try {
-    // Email ve Password kontrolü
     if (!Email || !Password) {
       throw new Error("E-posta ve şifre gereklidir");
     }
 
-    // Senin sütun ismin olan Email ile ara
     const [rows] = await db.execute("SELECT * FROM USERS WHERE Email = ? AND Is_Deleted = 0", [Email]);
     const user = rows[0];
 
     if (!user) return null;
 
-    // Şifreleri karşılaştır
     const isMatch = await bcrypt.compare(Password, user.Password);
     if (!isMatch) return null;
 
-    // Şifreyi güvenlik için çıkarıp geri dön
+    // Şifreyi objeden çıkar
     const { Password: _, ...userWithoutPassword } = user;
     
-    // Email'e göre role ekle
-    const role = Email.endsWith('@point.com') ? 'staff' : 'student';
+    // ROL KONTROLÜ: Owner tablosunda var mı?
+    const [ownerRows] = await db.execute("SELECT UserID FROM owner WHERE UserID = ?", [user.UserID]);
+    const role = ownerRows.length > 0 ? 'owner' : 'customer';
     
     return {
       ...userWithoutPassword,
-      role
+      role: role
     };
   } catch (error) {
     console.error("Giriş hatası:", error);
     throw error;
   }
 };
-
