@@ -47,6 +47,7 @@ function App() {
   // BAŞLANGIÇTA BOŞ DİZİ OLUŞTURUYORUZ
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   const categories = ["Tümü", "Yemekler", "Soğuk İçecekler", "Sıcak İçecekler"];
@@ -75,14 +76,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (activeCategory === "Tümü") {
-      setFilteredProducts(products);
-    } else {
-      setFilteredProducts(
-        products.filter(p => p.category === activeCategory)
+    let result = products;
+    if (activeCategory !== "Tümü") {
+      result = result.filter(p => p.category === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-  }, [activeCategory, products]);
+    setFilteredProducts(result);
+  }, [activeCategory, products, searchQuery]);
 
   // Siparişleri düzenli aralıklarla backend'den çekme
   useEffect(() => {
