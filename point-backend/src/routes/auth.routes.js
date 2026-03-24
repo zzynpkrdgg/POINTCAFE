@@ -11,4 +11,11 @@ router.post("/register", register); // Bu satırı ekledik
 // POST /api/auth/login
 router.post("/login", login);
 
+// Owner kontrol endpoint'i
+// GET /api/auth/check-owner
+router.get("/check-owner", async (req, res) => {
+    const { checkOwner } = await import("../controllers/auth.controller.js");
+    checkOwner(req, res);
+});
+
 export default router;

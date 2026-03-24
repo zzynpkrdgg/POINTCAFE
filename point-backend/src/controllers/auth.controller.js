@@ -5,7 +5,7 @@ export const register = async (req, res) => {
   try {
     // Debug: Gelen request body'yi logla
     console.log("🔍 Register Controller - req.body:", JSON.stringify(req.body));
-    
+
     // req.body kontrolü
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({
@@ -15,7 +15,7 @@ export const register = async (req, res) => {
     }
 
     const user = await registerUser(req.body);
-    
+
     return res.status(201).json({
       success: true,
       message: "Kullanıcı başarıyla kaydedildi",
@@ -25,7 +25,7 @@ export const register = async (req, res) => {
     console.error("❌ Register Controller Hatası:", error);
     // E-posta zaten kayıtlı hatası için 409 (Conflict) kullan
     const statusCode = error.message.includes("zaten kayıtlı") ? 409 : 500;
-    
+
     return res.status(statusCode).json({
       success: false,
       message: error.message || "Kayıt sırasında bir hata oluştu"
@@ -67,6 +67,18 @@ export const login = async (req, res) => {
       success: false,
       message: "Sunucu hatası: " + error.message
     });
+  }
+}
+
+
+// OWNER KONTROLÜ
+export const checkOwner = async (req, res) => {
+  try {
+    const { checkOwnerExists } = await import("../services/auth.service.js");
+    const exists = await checkOwnerExists();
+    return res.json({ exists });
+  } catch (error) {
+    return res.status(500).json({ message: "Sunucu hatası" });
   }
 };
 

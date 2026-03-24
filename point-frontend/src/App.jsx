@@ -61,7 +61,7 @@ function App() {
     }
   }, []);
 
-  // SAYFA YÜKLENDİĞİNDE BACKEND'DEN VERİ ÇEKME (FETCH)
+  // SAYFA YÜKLENDİĞİNDE VE BELİRLİ ARALIKLARLA BACKEND'DEN VERİ ÇEKME (FETCH)
   useEffect(() => {
     fetch("http://127.0.0.1:5001/api/products")
       .then(res => res.json())
@@ -364,7 +364,7 @@ function App() {
               return;
             }
 
-            // Backend'e gönderilecek paket (totalAmount ve price SİLİNDİ)
+            // Backend'e gönderilecek paket (tutar vs. backend'de)
             const orderData = {
               UserID: userInfo?.UserID || null,
               userName: userInfo?.name || userInfo?.UserName || "Bilinmeyen Öğrenci",
@@ -467,16 +467,41 @@ function App() {
 
           {/* Menü ve Ürünler */}
           <div className="container mx-auto px-4 max-w-5xl">
-            <div className="flex overflow-x-auto gap-3 pb-4 mb-2 no-scrollbar">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === cat ? "bg-rose-900 text-white shadow-md" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}
-                >
-                  {cat}
-                </button>
-              ))}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+              {/* Kategoriler */}
+              <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar w-full md:flex-1">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeCategory === cat ? "bg-rose-900 text-white shadow-lg transform scale-105" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Arama Çubuğu */}
+              <div className="relative w-full md:w-64 shrink-0">
+                <input
+                  type="text"
+                  placeholder="Ürünlerde ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-900 focus:border-transparent text-sm shadow-sm transition-all"
+                />
+                <svg className="absolute left-3 top-3 text-gray-400 w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             <h2 className="text-xl font-bold text-gray-800 mb-4">{activeCategory} Menüsü</h2>

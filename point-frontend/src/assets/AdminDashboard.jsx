@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
+import ProductIcon from './ProductIcon';
 
 // PROPS:
 // orders: App.js'den gelen canlı sipariş listesi
 // onUpdateOrderStatus: Sipariş durumunu değiştiren fonksiyon (Hazırla / Teslim Et)
 // onUpdateStock: Ürün stoğunu açıp kapatan fonksiyon
-const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders' veya 'products' sekmeleri
+const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateStockCount, onUpdateOrderStatus, onLogout }) => {
+  const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'products', 'delivered'
   const [expandedOrderId, setExpandedOrderId] = useState(null); // Kart içi ürün detayı için
+  const [stockSearchQuery, setStockSearchQuery] = useState(""); // Stok araması için state
+
+  // Siparişleri Durumlarına Göre Ayır
+  const activeOrdersList = orders ? orders.filter(o => ['Hazırlanıyor', 'Hazır'].includes(o.status)) : [];
+  const deliveredOrdersList = orders ? orders.filter(o => ['Teslim Edildi', 'Tamamlandı'].includes(o.status)) : [];
+
+  // Stok listesi filtreleme
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(stockSearchQuery.toLowerCase())
+  );
 
   return (
     <div className="h-screen bg-gray-100 flex font-sans overflow-hidden text-gray-800">
 
       {/* --- SOL SIDEBAR (SABİT) --- */}
       <div className="w-64 bg-rose-900 text-white flex flex-col shadow-2xl h-screen sticky top-0 shrink-0">
+        {/* ... (Sidebar içeriği aynı kalacak) ... */}
         <div className="p-6 text-center border-b border-rose-800">
           <h1 className="text-2xl font-bold italic tracking-tighter">POINT CAFE</h1>
           <p className="text-xs text-rose-200 opacity-70">Yönetici Paneli v1.0</p>
@@ -24,9 +36,9 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
             className={`w-full flex items-center p-3 rounded-xl transition-all ${activeTab === 'orders' ? 'bg-white text-rose-900 font-bold shadow-lg' : 'hover:bg-rose-800 text-rose-100'}`}
           >
             <span className="mr-3 text-xl">📋</span> Siparişler
-            {orders && orders.length > 0 && (
+            {activeOrdersList.length > 0 && (
               <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                {orders.length}
+                {activeOrdersList.length}
               </span>
             )}
           </button>
@@ -36,6 +48,13 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
             className={`w-full flex items-center p-3 rounded-xl transition-all ${activeTab === 'products' ? 'bg-white text-rose-900 font-bold shadow-lg' : 'hover:bg-rose-800 text-rose-100'}`}
           >
             <span className="mr-3 text-xl">📦</span> Ürün & Stok
+          </button>
+
+          <button
+            onClick={() => setActiveTab('delivered')}
+            className={`w-full flex items-center p-3 rounded-xl transition-all ${activeTab === 'delivered' ? 'bg-white text-rose-900 font-bold shadow-lg' : 'hover:bg-rose-800 text-rose-100'}`}
+          >
+            <span className="mr-3 text-xl">✅</span> Teslim Edilenler
           </button>
         </nav>
 
@@ -58,7 +77,7 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
               </span>
             </h2>
 
-            {(!orders || orders.length === 0) ? (
+            {activeOrdersList.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-dashed border-gray-200">
                 <span className="text-6xl block mb-2 text-gray-300">😴</span>
                 <h3 className="text-xl font-bold text-gray-600">Bekleyen Sipariş Yok</h3>
@@ -84,7 +103,7 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                           </div>
                           <div className="p-4 overflow-y-auto flex-1 note-scrollbar">
                             <ul className="space-y-3">
-                              {order.items.map((item, idx) => (
+                              {order.items?.map((item, idx) => (
                                 <li key={idx} className="flex justify-between border-b border-gray-50 pb-2 text-base font-bold text-gray-800">
                                   <span>{item.quantity}x {item.name}</span>
                                 </li>
@@ -94,11 +113,14 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                         </div>
                       )}
 
-                      {/* 1. BAŞLIK (Senin orijinal status mantığın) */}
-                      <div className="p-4 border-b bg-gray-50 flex justify-between items-start h-[80px] shrink-0">
+                      {/* 1. BAŞLIK */}
+                      <div className="p-5 flex justify-between items-start h-[90px] shrink-0">
                         <div>
-                          <span className="block text-2xl font-black text-gray-800 leading-none">{order.pickupTime}</span>
-                          <span className="text-sm text-gray-500 font-mono font-bold tracking-tight">#{order.id}</span>
+                          <span className="block text-3xl font-black text-gray-800 leading-none mb-1">{order.pickupTime}</span>
+                          <span className="text-sm text-gray-400 font-bold tracking-tight">#{order.id}</span>
+                          <div className="mt-1 text-xs text-rose-800 font-bold bg-rose-50 px-2 py-0.5 rounded-md inline-block">
+                            👤 {order.userName}
+                          </div>
                         </div>
                         <span className={`px-2 py-1 rounded text-[10px] font-bold shadow-sm border ${order.status === 'Hazırlanıyor' ? 'bg-blue-100 text-blue-700' :
                             order.status === 'Hazırlanıyor_Basladi' ? 'bg-amber-100 text-amber-700 animate-pulse' :
@@ -110,11 +132,11 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                         </span>
                       </div>
 
-                      {/* 2. ÜRÜNLER (Büyük Puntolu) */}
-                      <div className="p-4 h-[110px] shrink-0 flex flex-col justify-start">
-                        <ul className="space-y-1.5">
-                          {order.items.slice(0, 2).map((item, idx) => (
-                            <li key={idx} className="flex justify-between text-gray-800 font-bold text-sm border-b border-dashed border-gray-100 pb-1 last:border-0 truncate">
+                      {/* 2. ÜRÜNLER LISTESI */}
+                      <div className="px-5 h-[120px] shrink-0 flex flex-col justify-start">
+                        <ul className="space-y-2">
+                          {order.items?.slice(0, 3).map((item, idx) => (
+                            <li key={idx} className="flex justify-between text-gray-800 font-bold text-base pb-1 truncate">
                               <span>{item.quantity}x {item.name}</span>
                             </li>
                           ))}
@@ -122,43 +144,131 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
                         {order.items.length > 2 && (
                           <button
                             onClick={() => setExpandedOrderId(order.id)}
-                            className="mt-auto text-[11px] text-rose-700 font-bold bg-rose-50 px-2 py-1 rounded-lg border border-rose-100 hover:bg-rose-100 transition-all active:scale-95"
+                            className="mt-auto text-xs text-rose-700 font-bold hover:underline text-left"
                           >
-                            ▼ +{order.items.length - 2} Ürün Daha (Göster)
+                            ...ve {order.items.length - 3} ürün daha
                           </button>
                         )}
                       </div>
 
-                      {/* 3. NOT ALANI (Zarif ve İnce Scrollbar) */}
-                      <div className="px-4 h-[80px] shrink-0">
-                        <div className="h-full bg-amber-50 border border-amber-100 rounded-xl p-3 overflow-y-auto note-scrollbar shadow-inner">
-                          {order.note ? (
-                            <p className="text-amber-950 italic leading-snug text-[13px] break-words">
-                              <span className="font-bold not-italic border-b border-amber-200">📝 Not:</span> {order.note}
+                      {/* 3. NOT ALANI (Sarı Yapışkan Not Stili) */}
+                      <div className="px-5 py-2 grow flex flex-col justify-center">
+                        {order.note ? (
+                          <div className="bg-[#FFF9C4] p-3 rounded-lg shadow-sm border border-yellow-200 transform -rotate-1">
+                            <p className="text-yellow-900 italic font-medium text-sm leading-snug">
+                              "{order.note}"
                             </p>
-                          ) : (
-                            <p className="text-gray-300 italic flex items-center h-full justify-center text-xs">Not eklenmemiş</p>
-                          )}
-                        </div>
+                          </div>
+                        ) : (
+                          // Not yoksa boşluk
+                          <div className="h-full"></div>
+                        )}
                       </div>
 
-                      {/* 4. ALT KISIM (Orijinal Button Mantığın) */}
-                      <div className="mt-auto shrink-0 border-t border-gray-100 bg-gray-50">
-                        <div className="px-4 py-1 text-right font-black text-gray-900 text-xl tracking-tight leading-none pt-2">
-                          {order.totalAmount}₺
+                      {/* 4. ALT KISIM (Butonlar) */}
+                      <div className="mt-auto shrink-0 pb-5 px-5">
+                        <div className="text-right font-black text-gray-900 text-xl tracking-tight leading-none mb-4">
+                          Toplam: {order.totalAmount}₺
                         </div>
-                        <div className="p-4 flex gap-2 h-[90px] items-center pt-0">
+
+                        <div className="flex gap-2">
+                          {/* DURUMA GÖRE TEK BUTON GÖSTERİMİ */}
+
+                          {/* Durum: Hazırlanıyor -> Görev: Hazırla (YEŞİL BUTON) */}
                           {order.status === 'Hazırlanıyor' && (
-                            <button onClick={() => onUpdateOrderStatus(order.id, 'Hazırlanıyor_Basladi')} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md text-sm transition-all active:scale-95">👨‍🍳 Hazırlamaya Başla</button>
+                            <button
+                              onClick={() => onUpdateOrderStatus(order.id, 'Hazır')}
+                              className="w-full bg-[#22C55E] hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg text-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
+                            >
+                              <span>✅</span> Hazırla
+                            </button>
                           )}
-                          {order.status === 'Hazırlanıyor_Basladi' && (
-                            <button onClick={() => onUpdateOrderStatus(order.id, 'Hazır')} className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-md text-sm transition-all active:scale-95">✅ Hazır</button>
-                          )}
+
+                          {/* Durum: Hazır -> Görev: Teslim Et (KOYU BUTON) */}
                           {order.status === 'Hazır' && (
-                            <button onClick={() => onUpdateOrderStatus(order.id, 'Teslim Edildi')} className="flex-1 bg-gray-800 hover:bg-black text-white font-bold py-3.5 rounded-xl shadow-md text-sm transition-all active:scale-95">📦 Teslim Et</button>
+                            <button
+                              onClick={() => onUpdateOrderStatus(order.id, 'Teslim Edildi')}
+                              className="w-full bg-[#0F172A] hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg text-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
+                            >
+                              <span>📦</span> Teslim Et
+                            </button>
                           )}
+
+                          {/* Diğer durumlar için buton gerekirse buraya eklenir */}
                         </div>
                       </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === TESLİM EDİLENLER TABI === */}
+        {activeTab === 'delivered' && (
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Teslim Edilen Siparişler</h2>
+
+            {deliveredOrdersList.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-dashed border-gray-200">
+                <h3 className="text-xl font-bold text-gray-500">Henüz teslim edilen sipariş yok.</h3>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {deliveredOrdersList
+                  .sort((a, b) => b.id - a.id)
+                  .map((order) => (
+                    <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+
+                      {/* 1. Sol: Zaman ve ID */}
+                      <div className="flex flex-col items-center justify-center w-24 border-r border-gray-100 pr-4 shrink-0">
+                        <span className="text-2xl font-black text-gray-800 leading-none">{order.pickupTime}</span>
+                        <span className="text-xs text-gray-400 font-bold mt-1">#{order.id}</span>
+                        <span className="text-[10px] text-gray-500 font-bold mt-1 truncate max-w-full">{order.userName}</span>
+                      </div>
+
+                      {/* 2. Orta Sol: Ürün Listesi */}
+                      <div className="flex-1 px-6">
+                        <ul className="space-y-1">
+                          {order.items?.map((item, idx) => (
+                            <li key={idx} className="text-sm font-semibold text-gray-700">
+                              {item.quantity}x {item.name}
+                            </li>
+                          ))}
+                        </ul>
+                        {order.note && (
+                          <div className="mt-2 text-xs text-yellow-700 bg-yellow-50 px-2 py-1 rounded inline-block">
+                            Not: "{order.note}"
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. Orta Sağ: Kullanıcı Değerlendirmesi */}
+                      <div className="w-64 px-4 border-l border-gray-100 flex flex-col justify-center">
+                        {order.rating ? (
+                          <div className="text-left">
+                            <div className="flex text-yellow-400 text-lg mb-1">
+                              {'★'.repeat(order.rating)}{'☆'.repeat(5 - order.rating)}
+                            </div>
+                            {order.comment ? (
+                              <p className="text-xs text-gray-600 italic line-clamp-2">"{order.comment}"</p>
+                            ) : (
+                              <span className="text-xs text-gray-400">Yorum yok</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300 italic text-center block">Henüz değerlendirilmedi</span>
+                        )}
+                      </div>
+
+                      {/* 4. Sağ: Fiyat ve Durum */}
+                      <div className="flex flex-col items-end justify-center w-32 pl-4 border-l border-gray-100 shrink-0">
+                        <div className="font-black text-gray-900 text-xl mb-1">{order.totalAmount}₺</div>
+                        <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">
+                          Teslim Edildi
+                        </span>
+                      </div>
+
                     </div>
                   ))}
               </div>
@@ -169,7 +279,32 @@ const AdminDashboard = ({ products, orders, onUpdateStock, onUpdateOrderStatus, 
         {/* === STOK YÖNETİMİ === */}
         {activeTab === 'products' && (
           <div className="max-w-4xl mx-auto font-sans">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 font-sans">Menü & Stok Yönetimi</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 font-sans">Menü & Stok Yönetimi</h2>
+
+              {/* Stok Arama Çubuğu */}
+              <div className="relative w-64">
+                <input
+                  type="text"
+                  placeholder="Ürün Ara..."
+                  value={stockSearchQuery}
+                  onChange={(e) => setStockSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-900 text-sm shadow-sm"
+                />
+                <svg className="absolute left-3 top-2.5 text-gray-400 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                {stockSearchQuery && (
+                  <button
+                    onClick={() => setStockSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
               <table className="w-full text-left font-sans">
                 <tbody className="divide-y divide-gray-50 font-sans">

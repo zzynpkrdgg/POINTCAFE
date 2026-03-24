@@ -2,9 +2,17 @@ import db from "../config/db.js";
 
 export const getAllProducts = async () => {
   try {
-    // Sütun isimlerini frontend'in beklediği isimlere (name, price) çeviriyoruz
     const [rows] = await db.execute(
-      "SELECT ProductID as id, ProductName as name, ProductPrice as price, TotalStock as stock FROM PRODUCT"
+      `SELECT 
+        p.ProductID, 
+        p.ProductID as id, 
+        p.CategoryID,
+        p.ProductName as name, 
+        p.ProductPrice as price, 
+        p.TotalStock, 
+        c.CategoryName as category 
+       FROM PRODUCT p 
+       JOIN CATEGORY c ON p.CategoryID = c.CategoryID`
     );
     return rows;
   } catch (error) {

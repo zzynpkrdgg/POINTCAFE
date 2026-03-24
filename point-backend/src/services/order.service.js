@@ -1,7 +1,7 @@
 import db from "../config/db.js";
 
 export const createOrder = async (orderData) => {
-  console.log("Frontend'den gelen veri işleniyor...");
+  console.log("Frontend'den gelen veri:", orderData);
 
   // 1. Ana sipariş bilgilerini alıyoruz
   const UserID = orderData.UserID ?? null;
@@ -30,8 +30,11 @@ export const createOrder = async (orderData) => {
 
     return { OrderID: result.insertId, totalAmount: Total_Price, ...orderData };
   } catch (error) {
-    console.error("❌ Sipariş/Stok Hatası:", error.message);
+    await connection.rollback();
+    console.error("❌ Sipariş Oluşturma Hatası:", error.message);
     throw error;
+  } finally {
+    connection.release();
   }
 };
 

@@ -3,38 +3,6 @@ import bcrypt from "bcrypt";
 
 // KULLANICI KAYIT (Register)
 export const registerUser = async (userData) => {
-  // Frontend'den küçük harfle veya büyük harfle gelebilir
-  const UserName = userData.UserName || userData.userName || userData.firstName;
-  const UserSurname = userData.UserSurname || userData.userSurname || userData.lastName;
-  const Email = userData.Email || userData.email;
-  const Password = userData.Password || userData.password;
-  const PhoneNumber = userData.PhoneNumber || userData.phoneNumber || null;
-
-  // Debug: Gelen verileri logla
-  console.log("🔍 Register - req.body:", JSON.stringify(userData));
-  console.log("🔍 Register - Parsed:", {
-    UserName,
-    UserSurname,
-    Email,
-    Password: Password ? "***" : "undefined",
-    PasswordType: typeof Password,
-    PhoneNumber
-  });
-
-  // Validation - Daha sıkı kontrol
-  if (!UserName || UserName.trim() === '') {
-    throw new Error("Ad gereklidir!");
-  }
-  if (!UserSurname || UserSurname.trim() === '') {
-    throw new Error("Soyad gereklidir!");
-  }
-  if (!Email || Email.trim() === '') {
-    throw new Error("E-posta gereklidir!");
-  }
-  if (!Password || Password.trim() === '' || typeof Password !== 'string') {
-    throw new Error("Şifre gereklidir!");
-  }
-
   try {
     // 0. İlk kullanıcı mı kontrol et
     const [allUsers] = await db.execute("SELECT COUNT(*) as count FROM USERS");
